@@ -566,13 +566,9 @@ export function EditItemSheet({
     [item, onSave],
   );
 
-  const handleDelete = useCallback(
-    (id: string) => {
-      onDelete(id);
-      onOpenChange(false);
-    },
-    [onDelete, onOpenChange],
-  );
+  // No local close here — the parent shows a confirmation dialog on top of
+  // the open sheet, and the sheet unmounts once the confirmed item leaves
+  // the vault (editItem becomes null).
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -598,7 +594,7 @@ export function EditItemSheet({
               key={item.id}
               item={item}
               onSave={handleSave}
-              onDelete={handleDelete}
+              onDelete={onDelete}
             />
           </>
         )}

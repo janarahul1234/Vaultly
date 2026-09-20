@@ -10,8 +10,6 @@ import {
   DropdownMenuContent,
   DropdownMenuGroup,
   DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
@@ -37,8 +35,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { toast } from "@/components/ui/toast";
 import { ItemIcon } from "@/components/dashboard/item-icon";
+import { ItemActionsDropdown } from "@/components/dashboard/item-actions-dropdown";
 import {
   categoryStyles,
   navHeadings,
@@ -52,20 +50,15 @@ import {
   ArrowUpDownIcon,
   ChevronDownIcon,
   CreditCardIcon,
-  EyeIcon,
   FolderIcon,
-  KeyIcon,
   KeyRoundIcon,
   LayoutGridIcon,
-  MoreHorizontalIcon,
-  PencilIcon,
   PlusIcon,
   RotateCcwIcon,
   StarIcon,
   StickyNoteIcon,
   TagIcon,
   Trash2Icon,
-  UserIcon,
 } from "lucide-react";
 
 const typeOptions = ["All types", "Login", "Note", "Card"] as const;
@@ -79,23 +72,6 @@ const typeFilterMap: Record<
   Note: "note",
   Card: "card",
 };
-
-async function copyToClipboard(label: string, value: string) {
-  try {
-    await navigator.clipboard.writeText(value);
-    toast.add({
-      title: `${label} copied`,
-      description: value,
-      type: "success",
-    });
-  } catch {
-    toast.add({
-      title: "Copy failed",
-      description: "Clipboard is not available.",
-      type: "error",
-    });
-  }
-}
 
 function FilterSelect({
   label,
@@ -460,57 +436,13 @@ export function PasswordsPanel({
                       {item.updatedLabel}
                     </TableCell>
                     <TableCell>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger
-                          render={
-                            <Button
-                              variant="ghost"
-                              size="icon-sm"
-                              aria-label={`Actions for ${item.name}`}
-                            />
-                          }
-                        >
-                          <MoreHorizontalIcon />
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent
-                          align="end"
-                          className="w-auto min-w-48"
-                        >
-                          <DropdownMenuGroup>
-                            <DropdownMenuLabel>{item.name}</DropdownMenuLabel>
-                          </DropdownMenuGroup>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuGroup>
-                            <DropdownMenuItem onClick={() => onView(item.id)}>
-                              <EyeIcon /> View
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() =>
-                                copyToClipboard("Username", item.username)
-                              }
-                            >
-                              <UserIcon /> Copy Username
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() =>
-                                copyToClipboard("Password", "••••••••••")
-                              }
-                            >
-                              <KeyIcon /> Copy Password
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => onEdit(item.id)}>
-                              <PencilIcon /> Edit
-                            </DropdownMenuItem>
-                          </DropdownMenuGroup>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            variant="destructive"
-                            onClick={() => onTrash(item.id)}
-                          >
-                            <Trash2Icon /> Move to Trash
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                      <ItemActionsDropdown
+                        item={item}
+                        onView={onView}
+                        onEdit={onEdit}
+                        onToggleFavorite={onToggleFavorite}
+                        onTrash={onTrash}
+                      />
                     </TableCell>
                   </TableRow>
                 );

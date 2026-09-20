@@ -4,7 +4,7 @@ import Link from "next/link";
 import { VaultLogo } from "@/components/landing/brand-icons";
 import { ModeToggle } from "@/components/landing/mode-toggle";
 import { DashboardSearch } from "@/components/dashboard/dashboard-search";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { ProfileMenu } from "@/components/dashboard/profile-menu";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -18,11 +18,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import {
   BellIcon,
-  ChevronDownIcon,
-  LogOutIcon,
-  SettingsIcon,
-  UserIcon,
-  WalletIcon,
 } from "lucide-react";
 import type { VaultItem } from "@/components/dashboard/data";
 
@@ -92,57 +87,7 @@ export function DashboardHeader({ items }: { items: VaultItem[] }) {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          <DropdownMenu>
-            <DropdownMenuTrigger
-              render={
-                <Button
-                  variant="ghost"
-                  className="h-10 gap-2 px-1.5 sm:pr-2.5"
-                  aria-label="Account menu"
-                />
-              }
-            >
-              <Avatar>
-                <AvatarFallback className="bg-violet-500/15 text-violet-600 dark:text-violet-400">
-                  R
-                </AvatarFallback>
-              </Avatar>
-              <span className="hidden font-sans font-medium sm:inline">
-                Rahul
-              </span>
-              <ChevronDownIcon className="hidden size-4 text-muted-foreground sm:block" />
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-auto min-w-52">
-              <DropdownMenuGroup>
-                <DropdownMenuLabel className="flex flex-col gap-0">
-                  <span className="text-foreground">Rahul</span>
-                  <span className="text-xs font-normal text-muted-foreground">
-                    rahul@vaultly.dev
-                  </span>
-                </DropdownMenuLabel>
-              </DropdownMenuGroup>
-              <DropdownMenuSeparator />
-              <DropdownMenuGroup>
-                <DropdownMenuItem>
-                  <UserIcon /> Profile
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <WalletIcon /> Billing
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <SettingsIcon /> Settings
-                </DropdownMenuItem>
-              </DropdownMenuGroup>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                variant="destructive"
-                render={<Link href="/signin" />}
-                nativeButton={false}
-              >
-                <LogOutIcon /> Sign out
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <ProfileMenu />
         </div>
       </div>
     </header>

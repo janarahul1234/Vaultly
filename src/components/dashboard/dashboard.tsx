@@ -8,6 +8,7 @@ import {
   type NavCounts,
 } from "@/components/dashboard/dashboard-sidebar";
 import { EditItemSheet, type ItemEditDraft } from "@/components/dashboard/edit-item-sheet";
+import { DeleteItemDialog } from "@/components/dashboard/delete-item-dialog";
 import { PasswordsPanel } from "@/components/dashboard/passwords-panel";
 import { ViewItemSheet } from "@/components/dashboard/view-item-sheet";
 import {
@@ -25,6 +26,12 @@ type AddItemState = {
   type: Exclude<VaultItemType, "card">;
 };
 
+// Which confirmation the delete dialog is standing in front of.
+type DeleteTarget = {
+  item: VaultItem;
+  mode: "trash" | "forever";
+} | null;
+
 export function Dashboard() {
   // Single state object so trash moves stay one pure functional update —
   // safe under Strict Mode double-invocation (rerender-functional-setstate).
@@ -41,6 +48,7 @@ export function Dashboard() {
   });
   const [viewItemId, setViewItemId] = useState<string | null>(null);
   const [editItemId, setEditItemId] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<DeleteTarget>(null);
 
   const counts = useMemo<NavCounts>(
     () => ({
@@ -104,6 +112,29 @@ export function Dashboard() {
     });
   }, []);
 
+  // Every destructive delete funnels through the confirmation dialog —
+  // the actual state move only happens once the user confirms.
+  const requestDelete = useCallback(
+    (item: VaultItem, mode: "trash" | "forever") => {
+      setDeleteTarget({ item, mode });
+    },
+    [],
+  );
+
+  const closeDeleteDialog = useCallback((open: boolean) => {
+    if (!open) setDeleteTarget(null);
+  }, []);
+
+  const confirmDelete = useCallback(() => {
+    if (!deleteTarget) return;
+    if (deleteTarget.mode === "trash") {
+      moveToTrash(deleteTarget.item.id);
+    } else {
+      deleteForever(deleteTarget.item.id);
+    }
+    setDeleteTarget(null);
+  }, [deleteTarget, moveToTrash, deleteForever]);
+
   const removeTag = useCallback((id: string, tag: string) => {
     setVault((prev) => ({
       ...prev,
@@ -126,6 +157,23 @@ export function Dashboard() {
     setViewItemId(null);
     setEditItemId(id);
   }, []);
+
+  // The list menu and edit sheet delete through the same confirmation.
+  const requestTrashById = useCallback(
+    (id: string) => {
+      const item = items.find((x) => x.id === id);
+      if (item) requestDelete(item, "trash");
+    },
+    [items, requestDelete],
+  );
+
+  const requestForeverById = useCallback(
+    (id: string) => {
+      const item = trash.find((x) => x.id === id);
+      if (item) requestDelete(item, "forever");
+    },
+    [trash, requestDelete],
+  );
 
   const closeEditItem = useCallback((open: boolean) => {
     if (!open) setEditItemId(null);
@@ -260,9 +308,9 @@ export function Dashboard() {
           trash={trash}
           activeNav={activeNav}
           onToggleFavorite={toggleFavorite}
-          onTrash={moveToTrash}
+          onTrash={requestTrashById}
           onRestore={restoreItem}
-          onDeleteForever={deleteForever}
+          onDeleteForever={requestForeverById}
           onAddItem={openAddItem}
           onView={openViewItem}
           onEdit={openEditItem}
@@ -280,7 +328,17 @@ export function Dashboard() {
         onOpenChange={closeEditItem}
         item={editItem}
         onSave={saveEdit}
-        onDelete={moveToTrash}
+        onDelete={requestTrashById}
+      />
+      <DeleteItemDialog
+        item={deleteTarget?.item ?? null}
+        open={!!deleteTarget}
+        onOpenChange={closeDeleteDialog}
+        onConfirm={confirmDelete}
+        title={deleteTarget?.mode === "forever" ? "Delete forever?" : undefined}
+        actionLabel={
+          deleteTarget?.mode === "forever" ? "Delete forever" : undefined
+        }
       />
       <AddItemSheet
         open={addItemState.open}

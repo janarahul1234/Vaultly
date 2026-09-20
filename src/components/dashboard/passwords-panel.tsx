@@ -334,7 +334,7 @@ export function PasswordsPanel({
                 <TableRow key={item.id}>
                   <TableCell className="pl-4">
                     <div className="flex items-center gap-3">
-                      <ItemIcon />
+                      <ItemIcon iconKey={item.iconKey} />
                       <span className="font-medium">{item.name}</span>
                     </div>
                   </TableCell>
@@ -429,19 +429,23 @@ export function PasswordsPanel({
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-3">
-                        <ItemIcon />
+                        <ItemIcon iconKey={item.iconKey} />
                         <span className="font-medium">{item.name}</span>
                       </div>
                     </TableCell>
                     <TableCell>
-                      <a
-                        href={item.website}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-muted-foreground underline-offset-4 hover:text-primary hover:underline"
-                      >
-                        {item.website}
-                      </a>
+                      {item.website ? (
+                        <a
+                          href={item.website}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-muted-foreground underline-offset-4 hover:text-primary hover:underline"
+                        >
+                          {item.website}
+                        </a>
+                      ) : (
+                        <span className="text-muted-foreground">—</span>
+                      )}
                     </TableCell>
                     <TableCell>
                       <Badge className={categoryStyles[item.category]}>

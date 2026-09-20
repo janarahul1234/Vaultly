@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
+import { AddItemSheet, type ItemDraft } from "@/components/dashboard/add-item-sheet";
 import { DashboardHeader } from "@/components/dashboard/dashboard-header";
 import {
   DashboardSidebar,
@@ -16,10 +17,9 @@ import {
 } from "@/components/dashboard/data";
 import { toast } from "@/components/ui/toast";
 
-const addItemLabels: Record<VaultItemType, string> = {
-  login: "Password",
-  note: "Note",
-  card: "Card",
+type AddItemState = {
+  open: boolean;
+  type: Exclude<VaultItemType, "card">;
 };
 
 export function Dashboard() {
@@ -32,6 +32,10 @@ export function Dashboard() {
   const { items, trash } = vault;
   const [activeNav, setActiveNav] = useState<NavKey>("all");
   const [vaultLocked, setVaultLocked] = useState(true);
+  const [addItemState, setAddItemState] = useState<AddItemState>({
+    open: false,
+    type: "login",
+  });
 
   const counts = useMemo<NavCounts>(
     () => ({
@@ -95,11 +99,48 @@ export function Dashboard() {
     });
   }, []);
 
-  const addItem = useCallback((type: VaultItemType) => {
+  // "Card" falls back to the Login tab — the sheet only exposes the two
+  // editors shown in the design.
+  const openAddItem = useCallback((type: VaultItemType) => {
+    setAddItemState({ open: true, type: type === "note" ? "note" : "login" });
+  }, []);
+
+  const closeAddItem = useCallback((open: boolean) => {
+    setAddItemState((prev) => ({ ...prev, open }));
+  }, []);
+
+  const selectAddItemType = useCallback(
+    (type: Exclude<VaultItemType, "card">) => {
+      setAddItemState((prev) => ({ ...prev, type }));
+    },
+    [],
+  );
+
+  const saveItem = useCallback((draft: ItemDraft) => {
+    const item: VaultItem = {
+      id: `item-${Date.now()}`,
+      name: draft.name,
+      username: draft.username,
+      website: draft.website,
+      category: draft.category ?? "Personal",
+      tags: draft.tags,
+      type: draft.type,
+      favorite: false,
+      updatedAt: 0,
+      updatedLabel: "Just now",
+      iconKey: "generic",
+    };
+    setVault((prev) => ({
+      ...prev,
+      items: [...prev.items, item].sort((a, b) =>
+        a.name.localeCompare(b.name),
+      ),
+    }));
+    setAddItemState((prev) => ({ ...prev, open: false }));
     toast.add({
-      title: `${addItemLabels[type]} creation coming soon`,
-      description: "The item editor is not available in the demo yet.",
-      type: "info",
+      title: "Item saved",
+      description: `${draft.name} was added to your vault.`,
+      type: "success",
     });
   }, []);
 
@@ -138,9 +179,16 @@ export function Dashboard() {
           onTrash={moveToTrash}
           onRestore={restoreItem}
           onDeleteForever={deleteForever}
-          onAddItem={addItem}
+          onAddItem={openAddItem}
         />
       </div>
+      <AddItemSheet
+        open={addItemState.open}
+        onOpenChange={closeAddItem}
+        itemType={addItemState.type}
+        onItemTypeChange={selectAddItemType}
+        onSave={saveItem}
+      />
     </div>
   );
 }

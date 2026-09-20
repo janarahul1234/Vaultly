@@ -22,9 +22,17 @@ const iconMap: Record<VaultIconKey, React.FC<React.ComponentProps<"svg">>> = {
   amazon: AmazonIcon,
   x: XIcon,
   linkedin: LinkedInIcon,
+  generic: Earth,
 };
 
-export function ItemIcon({ className }: { className?: string }) {
+export function ItemIcon({
+  iconKey = "generic",
+  className,
+}: {
+  iconKey?: VaultIconKey;
+  className?: string;
+}) {
+  const Icon = iconMap[iconKey] ?? Earth;
   return (
     <span
       className={cn(
@@ -32,7 +40,7 @@ export function ItemIcon({ className }: { className?: string }) {
         className,
       )}
     >
-      <Earth size={20} />
+      <Icon className="size-5" />
     </span>
   );
 }

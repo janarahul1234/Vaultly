@@ -19,7 +19,9 @@ export type VaultIconKey =
   | "netflix"
   | "amazon"
   | "x"
-  | "linkedin";
+  | "linkedin"
+  /** Fallback for user-created items — renders the generic globe icon. */
+  | "generic";
 
 export type VaultItem = {
   id: string;

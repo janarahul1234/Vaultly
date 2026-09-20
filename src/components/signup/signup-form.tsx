@@ -28,6 +28,7 @@ import {
   MailIcon,
   UserIcon,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
 // Hoisted so the patterns are compiled once, not per render or per keystroke
@@ -66,6 +67,7 @@ function socialToast(provider: string) {
 }
 
 export function SignupForm() {
+  const router = useRouter();
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -115,8 +117,9 @@ export function SignupForm() {
       toast.add({
         type: "success",
         title: "Account created",
-        description: `Welcome to Vaultly, ${fullName.trim().split(" ")[0]}! Your vault is ready.`,
+        description: "We sent you a confirmation link. Check your inbox.",
       });
+      router.push(`/verify-email?email=${encodeURIComponent(email)}`);
     });
   };
 

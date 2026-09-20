@@ -3,6 +3,8 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 
+import { Toaster } from "@/components/ui/toast";
+
 const geistHeading = Geist({ subsets: ["latin"], variable: "--font-heading" });
 
 const geistSans = Geist({
@@ -34,12 +36,6 @@ try{
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en">
-      <head>
-        {/* <script dangerouslySetInnerHTML={{ __html: themeInitScript }} /> */}
-      </head>
-      {/* Font variables and antialiasing live on <body>, and scroll behavior
-          in globals.css, so <html> carries no className — the theme script can
-          toggle the `dark` class without causing a hydration mismatch. */}
       <body
         className={cn(
           "min-h-full flex flex-col font-mono antialiased",
@@ -49,6 +45,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         )}
       >
         {children}
+        <Toaster />
       </body>
     </html>
   );

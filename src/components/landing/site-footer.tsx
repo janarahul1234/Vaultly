@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { HeartIcon } from "lucide-react";
 import {
   DiscordIcon,
@@ -30,25 +31,25 @@ export function SiteFooter() {
           <VaultLogo />
           <nav className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-muted-foreground">
             {footerLinks.map((link) => (
-              <a
+              <Link
                 key={link.label}
                 href={link.href}
                 className="transition-colors hover:text-primary"
               >
                 {link.label}
-              </a>
+              </Link>
             ))}
           </nav>
           <div className="ml-auto flex items-center gap-1 text-muted-foreground">
             {socialLinks.map((social) => (
-              <a
+              <Link
                 key={social.label}
                 href={social.href}
                 aria-label={social.label}
                 className="flex size-8 items-center justify-center rounded-lg transition-colors hover:bg-muted hover:text-primary"
               >
                 <social.icon />
-              </a>
+              </Link>
             ))}
           </div>
         </div>

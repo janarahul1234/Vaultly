@@ -144,6 +144,8 @@ export function PasswordsPanel({
   onRestore,
   onDeleteForever,
   onAddItem,
+  onView,
+  onEdit,
 }: {
   items: VaultItem[];
   trash: VaultItem[];
@@ -153,6 +155,8 @@ export function PasswordsPanel({
   onRestore: (id: string) => void;
   onDeleteForever: (id: string) => void;
   onAddItem: (type: VaultItemType) => void;
+  onView: (id: string) => void;
+  onEdit: (id: string) => void;
 }) {
   const [typeFilter, setTypeFilter] = useState<string>(typeOptions[0]);
   const [categoryFilter, setCategoryFilter] = useState("All categories");
@@ -477,15 +481,7 @@ export function PasswordsPanel({
                           </DropdownMenuGroup>
                           <DropdownMenuSeparator />
                           <DropdownMenuGroup>
-                            <DropdownMenuItem
-                              onClick={() =>
-                                toast.add({
-                                  title: item.name,
-                                  description: item.website,
-                                  type: "info",
-                                })
-                              }
-                            >
+                            <DropdownMenuItem onClick={() => onView(item.id)}>
                               <EyeIcon /> View
                             </DropdownMenuItem>
                             <DropdownMenuItem
@@ -502,15 +498,7 @@ export function PasswordsPanel({
                             >
                               <KeyIcon /> Copy Password
                             </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() =>
-                                toast.add({
-                                  title: "Editor coming soon",
-                                  description: `Editing ${item.name} is not available in the demo yet.`,
-                                  type: "info",
-                                })
-                              }
-                            >
+                            <DropdownMenuItem onClick={() => onEdit(item.id)}>
                               <PencilIcon /> Edit
                             </DropdownMenuItem>
                           </DropdownMenuGroup>

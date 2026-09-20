@@ -7,8 +7,11 @@ import {
   DashboardSidebar,
   type NavCounts,
 } from "@/components/dashboard/dashboard-sidebar";
+import { EditItemSheet, type ItemEditDraft } from "@/components/dashboard/edit-item-sheet";
 import { PasswordsPanel } from "@/components/dashboard/passwords-panel";
+import { ViewItemSheet } from "@/components/dashboard/view-item-sheet";
 import {
+  formatVaultDate,
   vaultCapacity,
   vaultItems,
   type NavKey,
@@ -36,6 +39,8 @@ export function Dashboard() {
     open: false,
     type: "login",
   });
+  const [viewItemId, setViewItemId] = useState<string | null>(null);
+  const [editItemId, setEditItemId] = useState<string | null>(null);
 
   const counts = useMemo<NavCounts>(
     () => ({
@@ -99,6 +104,45 @@ export function Dashboard() {
     });
   }, []);
 
+  const removeTag = useCallback((id: string, tag: string) => {
+    setVault((prev) => ({
+      ...prev,
+      items: prev.items.map((item) =>
+        item.id === id
+          ? { ...item, tags: item.tags.filter((t) => t !== tag) }
+          : item,
+      ),
+    }));
+  }, []);
+
+  const openViewItem = useCallback((id: string) => setViewItemId(id), []);
+
+  const closeViewItem = useCallback((open: boolean) => {
+    if (!open) setViewItemId(null);
+  }, []);
+
+  // Editing replaces the view sheet so a single record is never open twice.
+  const openEditItem = useCallback((id: string) => {
+    setViewItemId(null);
+    setEditItemId(id);
+  }, []);
+
+  const closeEditItem = useCallback((open: boolean) => {
+    if (!open) setEditItemId(null);
+  }, []);
+
+  // Derived during render, not state — no effect needed
+  // (rerender-derived-state-no-effect).
+  const viewItem = useMemo(
+    () => items.find((item) => item.id === viewItemId) ?? null,
+    [items, viewItemId],
+  );
+
+  const editItem = useMemo(
+    () => items.find((item) => item.id === editItemId) ?? null,
+    [items, editItemId],
+  );
+
   // "Card" falls back to the Login tab — the sheet only exposes the two
   // editors shown in the design.
   const openAddItem = useCallback((type: VaultItemType) => {
@@ -117,6 +161,7 @@ export function Dashboard() {
   );
 
   const saveItem = useCallback((draft: ItemDraft) => {
+    const nowLabel = formatVaultDate(new Date());
     const item: VaultItem = {
       id: `item-${Date.now()}`,
       name: draft.name,
@@ -129,6 +174,10 @@ export function Dashboard() {
       updatedAt: 0,
       updatedLabel: "Just now",
       iconKey: "generic",
+      password: draft.password || undefined,
+      notes: draft.notes || undefined,
+      createdAt: nowLabel,
+      updatedAtLabel: nowLabel,
     };
     setVault((prev) => ({
       ...prev,
@@ -140,6 +189,41 @@ export function Dashboard() {
     toast.add({
       title: "Item saved",
       description: `${draft.name} was added to your vault.`,
+      type: "success",
+    });
+  }, []);
+
+  const saveEdit = useCallback((id: string, draft: ItemEditDraft) => {
+    const nowLabel = formatVaultDate(new Date());
+    // One pure update — merge the edit and re-sort together so a rename
+    // keeps the alphabetical list coherent (rerender-functional-setstate).
+    setVault((prev) => ({
+      ...prev,
+      items: prev.items
+        .map((item) =>
+          item.id === id
+            ? {
+                ...item,
+                name: draft.name,
+                username: draft.username,
+                website: draft.website,
+                category: draft.category,
+                tags: draft.tags,
+                type: draft.type,
+                password: draft.password || undefined,
+                notes: draft.notes || undefined,
+                updatedAt: 0,
+                updatedLabel: "Just now",
+                updatedAtLabel: nowLabel,
+              }
+            : item,
+        )
+        .sort((a, b) => a.name.localeCompare(b.name)),
+    }));
+    setEditItemId(null);
+    toast.add({
+      title: "Changes saved",
+      description: `${draft.name} was updated.`,
       type: "success",
     });
   }, []);
@@ -180,8 +264,24 @@ export function Dashboard() {
           onRestore={restoreItem}
           onDeleteForever={deleteForever}
           onAddItem={openAddItem}
+          onView={openViewItem}
+          onEdit={openEditItem}
         />
       </div>
+      <ViewItemSheet
+        open={!!viewItem}
+        onOpenChange={closeViewItem}
+        item={viewItem}
+        onRemoveTag={removeTag}
+        onEdit={openEditItem}
+      />
+      <EditItemSheet
+        open={!!editItem}
+        onOpenChange={closeEditItem}
+        item={editItem}
+        onSave={saveEdit}
+        onDelete={moveToTrash}
+      />
       <AddItemSheet
         open={addItemState.open}
         onOpenChange={closeAddItem}

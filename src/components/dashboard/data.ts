@@ -37,7 +37,26 @@ export type VaultItem = {
   /** Human-readable relative time — used for display. */
   updatedLabel: string;
   iconKey: VaultIconKey;
+  /** Stored secret — masked until revealed in the details panel. */
+  password?: string;
+  /** Free-form secure note shown in the details panel. */
+  notes?: string;
+  /** Absolute creation timestamp — shown in the details panel footer. */
+  createdAt?: string;
+  /** Absolute last-update timestamp — shown in the details panel footer. */
+  updatedAtLabel?: string;
 };
+
+// "Jan 10, 2024, 3:24 PM" — the absolute format used by the details panel.
+export function formatVaultDate(date: Date) {
+  return date.toLocaleString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
 
 export const vaultItems: VaultItem[] = [
   {
@@ -46,12 +65,16 @@ export const vaultItems: VaultItem[] = [
     username: "rahul@vaultly.dev",
     website: "https://github.com",
     category: "Work",
-    tags: ["dev", "code"],
+    tags: ["dev", "coding", "opensource"],
     type: "login",
     favorite: true,
     updatedAt: 2,
     updatedLabel: "2 days ago",
     iconKey: "github",
+    password: "Gh!7xKp2mQ9vLr4Z",
+    notes: "Personal GitHub account for open source projects.",
+    createdAt: "Jan 10, 2024, 3:24 PM",
+    updatedAtLabel: "Jan 12, 2024, 11:08 AM",
   },
   {
     id: "google",
@@ -65,6 +88,10 @@ export const vaultItems: VaultItem[] = [
     updatedAt: 5,
     updatedLabel: "5 days ago",
     iconKey: "google",
+    password: "G00gle#Secure21",
+    notes: "Primary personal email account.",
+    createdAt: "Feb 2, 2024, 9:15 AM",
+    updatedAtLabel: "Jan 10, 2024, 5:40 PM",
   },
   {
     id: "notion",
@@ -78,6 +105,10 @@ export const vaultItems: VaultItem[] = [
     updatedAt: 7,
     updatedLabel: "1 week ago",
     iconKey: "notion",
+    password: "N0t!on@Work88",
+    notes: "Company wiki and project docs.",
+    createdAt: "Mar 14, 2024, 10:02 AM",
+    updatedAtLabel: "Jan 8, 2024, 2:19 PM",
   },
   {
     id: "spotify",
@@ -91,6 +122,10 @@ export const vaultItems: VaultItem[] = [
     updatedAt: 7,
     updatedLabel: "1 week ago",
     iconKey: "spotify",
+    password: "Sp0t!fy#Music7",
+    notes: "Family plan — 4 accounts.",
+    createdAt: "Apr 3, 2024, 8:47 PM",
+    updatedAtLabel: "Jan 8, 2024, 9:05 AM",
   },
   {
     id: "netflix",
@@ -104,6 +139,10 @@ export const vaultItems: VaultItem[] = [
     updatedAt: 14,
     updatedLabel: "2 weeks ago",
     iconKey: "netflix",
+    password: "N3tflix@Fam2024",
+    notes: "Shared with family. Don't change the plan.",
+    createdAt: "May 21, 2024, 7:30 PM",
+    updatedAtLabel: "Dec 31, 2023, 6:12 PM",
   },
   {
     id: "amazon",
@@ -117,6 +156,10 @@ export const vaultItems: VaultItem[] = [
     updatedAt: 15,
     updatedLabel: "2 weeks ago",
     iconKey: "amazon",
+    password: "Am4z0n#Shop55",
+    notes: "Default delivery: home address.",
+    createdAt: "Jun 8, 2024, 12:41 PM",
+    updatedAtLabel: "Dec 28, 2023, 4:55 PM",
   },
   {
     id: "x",
@@ -130,6 +173,9 @@ export const vaultItems: VaultItem[] = [
     updatedAt: 21,
     updatedLabel: "3 weeks ago",
     iconKey: "x",
+    password: "X!tw33t@Rahul9",
+    createdAt: "Jul 19, 2024, 3:05 PM",
+    updatedAtLabel: "Dec 22, 2023, 11:20 AM",
   },
   {
     id: "linkedin",
@@ -143,6 +189,10 @@ export const vaultItems: VaultItem[] = [
     updatedAt: 22,
     updatedLabel: "3 weeks ago",
     iconKey: "linkedin",
+    password: "L!nk3dIn#Work7",
+    notes: "Keep the profile updated for job roles.",
+    createdAt: "Aug 2, 2024, 9:58 AM",
+    updatedAtLabel: "Dec 20, 2023, 1:34 PM",
   },
 ];
 

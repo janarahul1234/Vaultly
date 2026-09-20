@@ -1,0 +1,349 @@
+"use client";
+
+import { useCallback, useState } from "react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupButton,
+  InputGroupInput,
+  InputGroupTextarea,
+} from "@/components/ui/input-group";
+import {
+  Sheet,
+  SheetClose,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { toast } from "@/components/ui/toast";
+import { ItemIcon } from "@/components/dashboard/item-icon";
+import type { VaultItem } from "@/components/dashboard/data";
+import {
+  CopyIcon,
+  ExternalLinkIcon,
+  EyeIcon,
+  EyeOffIcon,
+  FolderIcon,
+  KeyRoundIcon,
+  PencilIcon,
+  StickyNoteIcon,
+  XIcon,
+} from "lucide-react";
+
+// Fallback for demo items without a stored secret — keeps the password row
+// functional without inventing per-row data.
+const fallbackPassword = "V4ultly!Demo#2024";
+
+async function copyToClipboard(label: string, value: string) {
+  try {
+    await navigator.clipboard.writeText(value);
+    toast.add({
+      title: `${label} copied`,
+      description: value,
+      type: "success",
+    });
+  } catch {
+    toast.add({
+      title: "Copy failed",
+      description: "Clipboard is not available.",
+      type: "error",
+    });
+  }
+}
+
+function ReadOnlyTitleField({ id, label, value }: { id: string; label: string; value: string }) {
+  return (
+    <Field>
+      <FieldLabel htmlFor={id}>{label}</FieldLabel>
+      <InputGroup>
+        <InputGroupInput id={id} readOnly tabIndex={-1} value={value} />
+      </InputGroup>
+    </Field>
+  );
+}
+
+function CategoryField({ value }: { value: string }) {
+  return (
+    <Field>
+      <FieldLabel>Category</FieldLabel>
+      <InputGroup>
+        <InputGroupAddon align="inline-start">
+          <FolderIcon />
+        </InputGroupAddon>
+        <InputGroupInput readOnly tabIndex={-1} value={value} />
+      </InputGroup>
+    </Field>
+  );
+}
+
+function TagsField({
+  item,
+  onRemoveTag,
+}: {
+  item: VaultItem;
+  onRemoveTag: (id: string, tag: string) => void;
+}) {
+  return (
+    <Field>
+      <FieldLabel>Tags</FieldLabel>
+      {item.tags.length > 0 ? (
+        <div className="flex flex-wrap gap-1.5">
+          {item.tags.map((tag) => (
+            <Badge key={tag} variant="secondary" className="gap-1 pr-1">
+              {tag}
+              <Button
+                variant="ghost"
+                size="icon-xs"
+                aria-label={`Remove ${tag} tag`}
+                onClick={() => onRemoveTag(item.id, tag)}
+              >
+                <XIcon />
+              </Button>
+            </Badge>
+          ))}
+        </div>
+      ) : (
+        <p className="text-sm text-muted-foreground">No tags.</p>
+      )}
+    </Field>
+  );
+}
+
+function NotesField({ id, value }: { id: string; value: string }) {
+  return (
+    <Field>
+      <FieldLabel htmlFor={id}>Notes</FieldLabel>
+      <InputGroup>
+        <InputGroupTextarea
+          id={id}
+          readOnly
+          tabIndex={-1}
+          placeholder="No notes yet."
+          value={value}
+        />
+      </InputGroup>
+    </Field>
+  );
+}
+
+// Keyed per item by the parent — useState below is therefore correct lazy
+// init: tab and password visibility reset whenever a new item is viewed.
+function ViewItemDetail({
+  item,
+  onRemoveTag,
+  onEdit,
+}: {
+  item: VaultItem;
+  onRemoveTag: (id: string, tag: string) => void;
+  onEdit: (id: string) => void;
+}) {
+  const [tab, setTab] = useState(item.type === "note" ? "note" : "login");
+  const [showPassword, setShowPassword] = useState(false);
+
+  const passwordValue = item.password ?? fallbackPassword;
+
+  const openWebsite = useCallback(() => {
+    if (!item.website) return;
+    window.open(
+      /^https?:\/\//.test(item.website)
+        ? item.website
+        : `https://${item.website}`,
+      "_blank",
+    );
+  }, [item.website]);
+
+  const handleEdit = useCallback(() => onEdit(item.id), [item.id, onEdit]);
+
+  return (
+    <div className="flex min-h-0 flex-1 flex-col">
+      <Tabs
+        value={tab}
+        onValueChange={(value) => setTab(value as "login" | "note")}
+        className="min-h-0 flex-1 gap-0"
+      >
+        <TabsList
+          variant="line"
+          className="w-full shrink-0 rounded-none border-b px-6"
+        >
+          <TabsTrigger
+            value="login"
+            className="gap-2 text-sm data-active:text-primary data-active:after:bg-primary"
+          >
+            <KeyRoundIcon />
+            Login / Password
+          </TabsTrigger>
+          <TabsTrigger
+            value="note"
+            className="gap-2 text-sm data-active:text-primary data-active:after:bg-primary"
+          >
+            <StickyNoteIcon />
+            Secure Note
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="login" className="flex-1 overflow-y-auto p-6">
+          <FieldGroup>
+            <ReadOnlyTitleField id="view-title" label="Title" value={item.name} />
+
+            <Field>
+              <FieldLabel htmlFor="view-website">Website</FieldLabel>
+              <InputGroup>
+                <InputGroupInput
+                  id="view-website"
+                  readOnly
+                  tabIndex={-1}
+                  value={item.website}
+                  placeholder="No website"
+                />
+                <InputGroupAddon align="inline-end">
+                  <InputGroupButton
+                    size="icon-sm"
+                    aria-label="Open website"
+                    onClick={openWebsite}
+                  >
+                    <ExternalLinkIcon />
+                  </InputGroupButton>
+                </InputGroupAddon>
+              </InputGroup>
+            </Field>
+
+            <Field>
+              <FieldLabel htmlFor="view-username">Username / Email</FieldLabel>
+              <InputGroup>
+                <InputGroupInput
+                  id="view-username"
+                  readOnly
+                  tabIndex={-1}
+                  value={item.username}
+                />
+                <InputGroupAddon align="inline-end">
+                  <InputGroupButton
+                    size="icon-sm"
+                    aria-label="Copy username"
+                    onClick={() => copyToClipboard("Username", item.username)}
+                  >
+                    <CopyIcon />
+                  </InputGroupButton>
+                </InputGroupAddon>
+              </InputGroup>
+            </Field>
+
+            <Field>
+              <FieldLabel htmlFor="view-password">Password</FieldLabel>
+              <InputGroup>
+                <InputGroupInput
+                  id="view-password"
+                  type={showPassword ? "text" : "password"}
+                  readOnly
+                  tabIndex={-1}
+                  value={passwordValue}
+                />
+                <InputGroupAddon align="inline-end">
+                  <InputGroupButton
+                    size="icon-sm"
+                    aria-label={
+                      showPassword ? "Hide password" : "Show password"
+                    }
+                    onClick={() => setShowPassword((prev) => !prev)}
+                  >
+                    {showPassword ? <EyeOffIcon /> : <EyeIcon />}
+                  </InputGroupButton>
+                  <InputGroupButton
+                    size="icon-sm"
+                    aria-label="Copy password"
+                    onClick={() => copyToClipboard("Password", passwordValue)}
+                  >
+                    <CopyIcon />
+                  </InputGroupButton>
+                </InputGroupAddon>
+              </InputGroup>
+            </Field>
+
+            <CategoryField value={item.category} />
+            <TagsField item={item} onRemoveTag={onRemoveTag} />
+            <NotesField id="view-notes" value={item.notes ?? ""} />
+          </FieldGroup>
+        </TabsContent>
+
+        <TabsContent value="note" className="flex-1 overflow-y-auto p-6">
+          <FieldGroup>
+            <ReadOnlyTitleField
+              id="view-note-title"
+              label="Title"
+              value={item.name}
+            />
+            <CategoryField value={item.category} />
+            <TagsField item={item} onRemoveTag={onRemoveTag} />
+            <NotesField id="view-note-body" value={item.notes ?? ""} />
+          </FieldGroup>
+        </TabsContent>
+      </Tabs>
+
+      <SheetFooter className="shrink-0 gap-3 border-t">
+        <div className="flex w-full items-center justify-between gap-2">
+          <SheetClose render={<Button variant="outline" />}>Close</SheetClose>
+          <Button onClick={handleEdit}>
+            <PencilIcon data-icon="inline-start" />
+            Edit Item
+          </Button>
+        </div>
+        <div className="flex flex-col gap-0.5 text-xs text-muted-foreground">
+          <p>Created • {item.createdAt ?? "—"}</p>
+          <p>Last updated • {item.updatedAtLabel ?? item.updatedLabel}</p>
+        </div>
+      </SheetFooter>
+    </div>
+  );
+}
+
+export function ViewItemSheet({
+  open,
+  onOpenChange,
+  item,
+  onRemoveTag,
+  onEdit,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  item: VaultItem | null;
+  onRemoveTag: (id: string, tag: string) => void;
+  onEdit: (id: string) => void;
+}) {
+  return (
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent
+        side="right"
+        className="w-full max-w-md gap-0 p-0 font-sans sm:max-w-md"
+      >
+        {item && (
+          <>
+            <SheetHeader className="flex-row items-center gap-3 px-6 pt-6 pb-3 text-left">
+              <ItemIcon iconKey={item.iconKey} className="size-11 rounded-xl" />
+              <div className="flex flex-col gap-0.5">
+                <SheetTitle className="text-lg font-semibold">
+                  View Details
+                </SheetTitle>
+                <SheetDescription>
+                  View your saved information.
+                </SheetDescription>
+              </div>
+            </SheetHeader>
+            {/* Remounts per item so tab/visibility state resets (lazy init). */}
+            <ViewItemDetail
+              key={item.id}
+              item={item}
+              onRemoveTag={onRemoveTag}
+              onEdit={onEdit}
+            />
+          </>
+        )}
+      </SheetContent>
+    </Sheet>
+  );
+}

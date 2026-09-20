@@ -1,4 +1,5 @@
-import { MenuIcon } from "lucide-react";
+import { VaultLogo } from "@/components/landing/brand-icons";
+import { ModeToggle } from "@/components/landing/mode-toggle";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -8,8 +9,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { VaultLogo } from "@/components/landing/brand-icons";
-import { ModeToggle } from "@/components/landing/mode-toggle";
+import { MenuIcon } from "lucide-react";
+import Link from "next/link";
 
 const navLinks = [
   { label: "Features", href: "#features" },
@@ -22,19 +23,19 @@ export function SiteHeader() {
   return (
     <header className="sticky top-0 z-40 border-b bg-background/80 backdrop-blur">
       <div className="mx-auto flex h-14 w-full max-w-6xl items-center gap-6 px-4 md:px-6">
-        <a href="#" aria-label="Vaultly home" className="flex items-center">
+        <Link href="/" aria-label="Vaultly home" className="flex items-center">
           <VaultLogo />
-        </a>
+        </Link>
 
         <nav className="hidden items-center gap-6 text-sm font-medium text-muted-foreground md:flex">
           {navLinks.map((link) => (
-            <a
+            <Link
               key={link.label}
               href={link.href}
               className="transition-colors hover:text-primary"
             >
               {link.label}
-            </a>
+            </Link>
           ))}
         </nav>
 
@@ -43,14 +44,14 @@ export function SiteHeader() {
           <Button
             variant="outline"
             nativeButton={false}
-            render={<a href="#" />}
-            className="hidden sm:inline-flex font-sans"
+            render={<Link href="/signin" />}
+            className="font-sans"
           >
             Sign in
           </Button>
           <Button
             nativeButton={false}
-            render={<a href="#get-started" />}
+            render={<Link href="/signup" />}
             className="font-sans"
           >
             Get started
@@ -67,17 +68,14 @@ export function SiteHeader() {
             <DropdownMenuContent align="end" className="w-48">
               <DropdownMenuGroup>
                 {navLinks.map((link) => (
-                  <DropdownMenuItem
-                    key={link.label}
-                    render={<a href={link.href} />}
-                  >
-                    {link.label}
+                  <DropdownMenuItem key={link.label}>
+                    <Link href={link.href}>{link.label}</Link>
                   </DropdownMenuItem>
                 ))}
               </DropdownMenuGroup>
               <DropdownMenuSeparator />
-              <DropdownMenuItem render={<a href="#" />}>
-                Sign in
+              <DropdownMenuItem>
+                <Link href="/signin">Sign in</Link>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

@@ -45,7 +45,11 @@ const floatingTiles = [
   },
 ];
 
-export function SignupShowcase() {
+export function SignupShowcase({
+  headline = "Start securing your digital life",
+}: {
+  headline?: string;
+}) {
   return (
     <aside className="relative hidden flex-col gap-10 overflow-hidden bg-linear-to-b from-primary/10 via-primary/5 to-background p-10 lg:flex xl:p-8">
       {/* Brand */}
@@ -64,7 +68,7 @@ export function SignupShowcase() {
       {/* Headline */}
       <div className="flex flex-col gap-4">
         <h1 className="font-heading text-4xl font-semibold tracking-tight text-balance xl:text-4xl">
-          Start securing your digital life
+          {headline}
         </h1>
         <p className="max-w-md text-sm leading-relaxed text-muted-foreground">
           Create your free account and keep your passwords, notes, files, and

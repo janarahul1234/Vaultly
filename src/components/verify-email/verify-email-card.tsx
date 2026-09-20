@@ -47,7 +47,7 @@ const helpItems = [
 
 export function VerifyEmailCard({ email }: { email: string }) {
   return (
-    <Card className="w-full max-w-3xl [--card-spacing:--spacing(8)] rounded-3xl">
+    <Card className="w-full max-w-2xl [--card-spacing:--spacing(8)] rounded-3xl">
       <CardHeader className="text-center">
         <EmailSentIllustration className="mx-auto w-full max-w-65" />
         <CardTitle className="text-3xl font-semibold tracking-tight mb-1">
@@ -65,7 +65,9 @@ export function VerifyEmailCard({ email }: { email: string }) {
           address and activate your account.
         </p>
 
-        <Alert className="grid-cols-[auto_1fr] items-center gap-x-4 rounded-xl bg-muted/50 p-4">
+        {/* Action overlays the alert only from sm up; on mobile it flows
+            below the text so nothing overlaps the Resend button. */}
+        <Alert className="grid-cols-[auto_1fr] items-center gap-x-4 rounded-xl bg-muted/50 p-4 max-sm:pr-4! sm:pr-40!">
           <span
             aria-hidden
             className="row-span-2 flex size-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary"
@@ -78,7 +80,7 @@ export function VerifyEmailCard({ email }: { email: string }) {
           <AlertDescription>
             Check your spam folder or request a new link.
           </AlertDescription>
-          <AlertAction className="top-1/2 right-4 -translate-y-1/2">
+          <AlertAction className="relative inset-auto mt-2 translate-y-0 justify-self-start col-start-2 sm:absolute sm:top-1/2 sm:right-4 sm:mt-0 sm:-translate-y-1/2">
             <ResendEmailButton email={email} />
           </AlertAction>
         </Alert>

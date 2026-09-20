@@ -1,0 +1,536 @@
+"use client";
+
+import { useCallback, useMemo, useState } from "react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { ButtonGroup } from "@/components/ui/button-group";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { toast } from "@/components/ui/toast";
+import { ItemIcon } from "@/components/dashboard/item-icon";
+import {
+  categoryStyles,
+  navHeadings,
+  type NavKey,
+  type VaultCategory,
+  type VaultItem,
+  type VaultItemType,
+} from "@/components/dashboard/data";
+import { cn } from "@/lib/utils";
+import {
+  ArrowUpDownIcon,
+  ChevronDownIcon,
+  CreditCardIcon,
+  EyeIcon,
+  FolderIcon,
+  KeyIcon,
+  KeyRoundIcon,
+  LayoutGridIcon,
+  MoreHorizontalIcon,
+  PencilIcon,
+  PlusIcon,
+  RotateCcwIcon,
+  StarIcon,
+  StickyNoteIcon,
+  TagIcon,
+  Trash2Icon,
+  UserIcon,
+} from "lucide-react";
+
+const typeOptions = ["All types", "Login", "Note", "Card"] as const;
+const sortOptions = ["Name", "Recently Updated"] as const;
+const typeFilterMap: Record<
+  (typeof typeOptions)[number],
+  VaultItemType | "all"
+> = {
+  "All types": "all",
+  Login: "login",
+  Note: "note",
+  Card: "card",
+};
+
+async function copyToClipboard(label: string, value: string) {
+  try {
+    await navigator.clipboard.writeText(value);
+    toast.add({
+      title: `${label} copied`,
+      description: value,
+      type: "success",
+    });
+  } catch {
+    toast.add({
+      title: "Copy failed",
+      description: "Clipboard is not available.",
+      type: "error",
+    });
+  }
+}
+
+function FilterSelect({
+  label,
+  icon: Icon,
+  options,
+  value,
+  onValueChange,
+}: {
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  options: readonly string[];
+  value: string;
+  onValueChange: (value: string) => void;
+}) {
+  return (
+    <Select
+      value={value}
+      onValueChange={(next) => onValueChange(next ?? value)}
+    >
+      <SelectTrigger
+        aria-label={label}
+        className="gap-2 border-border bg-background font-sans"
+      >
+        <Icon className="text-muted-foreground" />
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectGroup>
+          {options.map((option) => (
+            <SelectItem key={option} value={option}>
+              {option}
+            </SelectItem>
+          ))}
+        </SelectGroup>
+      </SelectContent>
+    </Select>
+  );
+}
+
+export function PasswordsPanel({
+  items,
+  trash,
+  activeNav,
+  onToggleFavorite,
+  onTrash,
+  onRestore,
+  onDeleteForever,
+  onAddItem,
+}: {
+  items: VaultItem[];
+  trash: VaultItem[];
+  activeNav: NavKey;
+  onToggleFavorite: (id: string) => void;
+  onTrash: (id: string) => void;
+  onRestore: (id: string) => void;
+  onDeleteForever: (id: string) => void;
+  onAddItem: (type: VaultItemType) => void;
+}) {
+  const [typeFilter, setTypeFilter] = useState<string>(typeOptions[0]);
+  const [categoryFilter, setCategoryFilter] = useState("All categories");
+  const [tagFilter, setTagFilter] = useState("All tags");
+  const [sortValue, setSortValue] = useState<string>(sortOptions[0]);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+
+  const categoryOptions = useMemo(
+    () => [
+      "All categories",
+      ...Array.from(new Set(items.map((item) => item.category))),
+    ],
+    [items],
+  );
+
+  const tagOptions = useMemo(
+    () => [
+      "All tags",
+      ...Array.from(new Set(items.flatMap((item) => item.tags))),
+    ],
+    [items],
+  );
+
+  const visibleItems = useMemo(() => {
+    if (activeNav === "trash") return [];
+    let list = items;
+    if (activeNav === "favorites") {
+      list = list.filter((item) => item.favorite);
+    }
+    const type = typeFilterMap[typeFilter as keyof typeof typeFilterMap];
+    if (type !== "all") {
+      list = list.filter((item) => item.type === type);
+    }
+    if (categoryFilter !== "All categories") {
+      list = list.filter(
+        (item) => item.category === (categoryFilter as VaultCategory),
+      );
+    }
+    if (tagFilter !== "All tags") {
+      list = list.filter((item) => item.tags.includes(tagFilter));
+    }
+    return [...list].sort((a, b) =>
+      sortValue === "Recently Updated"
+        ? a.updatedAt - b.updatedAt
+        : a.name.localeCompare(b.name),
+    );
+  }, [items, activeNav, typeFilter, categoryFilter, tagFilter, sortValue]);
+
+  // Functional setState keeps the callbacks stable (rerender-functional-setstate).
+  const toggleSelected = useCallback((id: string) => {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
+    );
+  }, []);
+
+  const allSelected =
+    visibleItems.length > 0 &&
+    visibleItems.every((item) => selectedIds.includes(item.id));
+  const someSelected = visibleItems.some((item) =>
+    selectedIds.includes(item.id),
+  );
+
+  const toggleAll = (checked: boolean) => {
+    const visibleIds = visibleItems.map((item) => item.id);
+    setSelectedIds((prev) =>
+      checked
+        ? [...new Set([...prev, ...visibleIds])]
+        : prev.filter((id) => !visibleIds.includes(id)),
+    );
+  };
+
+  const heading = navHeadings[activeNav];
+  const isTrash = activeNav === "trash";
+  const rowCount = isTrash ? trash.length : visibleItems.length;
+
+  return (
+    <main className="min-w-0 flex-1 px-4 py-6 md:px-8">
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div className="flex flex-col gap-1">
+          <h1 className="font-heading text-2xl font-bold md:text-3xl">
+            {heading.title}
+          </h1>
+          <p className="text-muted-foreground">{heading.subtitle}</p>
+        </div>
+
+        <ButtonGroup>
+          <Button onClick={() => onAddItem("login")}>
+            <PlusIcon data-icon="inline-start" />
+            Add Item
+          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              render={
+                <Button aria-label="More item options" className="px-2">
+                  <ChevronDownIcon />
+                </Button>
+              }
+            />
+            <DropdownMenuContent align="end" className="w-auto min-w-44">
+              <DropdownMenuGroup>
+                <DropdownMenuItem onClick={() => onAddItem("login")}>
+                  <KeyRoundIcon /> New Password
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onAddItem("note")}>
+                  <StickyNoteIcon /> New Note
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onAddItem("card")}>
+                  <CreditCardIcon /> New Card
+                </DropdownMenuItem>
+              </DropdownMenuGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </ButtonGroup>
+      </div>
+
+      {!isTrash && (
+        <div className="mt-6 flex flex-wrap gap-2">
+          <FilterSelect
+            label="Filter by type"
+            icon={LayoutGridIcon}
+            options={typeOptions}
+            value={typeFilter}
+            onValueChange={setTypeFilter}
+          />
+          <FilterSelect
+            label="Filter by category"
+            icon={FolderIcon}
+            options={categoryOptions}
+            value={categoryFilter}
+            onValueChange={setCategoryFilter}
+          />
+          <FilterSelect
+            label="Filter by tag"
+            icon={TagIcon}
+            options={tagOptions}
+            value={tagFilter}
+            onValueChange={setTagFilter}
+          />
+          <FilterSelect
+            label="Sort items"
+            icon={ArrowUpDownIcon}
+            options={sortOptions}
+            value={sortValue}
+            onValueChange={setSortValue}
+          />
+        </div>
+      )}
+
+      <div className="mt-4 rounded-xl border bg-card">
+        {rowCount === 0 ? (
+          <Empty className="py-16">
+            <EmptyHeader>
+              <EmptyMedia variant="icon">
+                {isTrash ? <Trash2Icon /> : <KeyRoundIcon />}
+              </EmptyMedia>
+              <EmptyTitle>
+                {isTrash ? "Trash is empty" : "No items match your filters"}
+              </EmptyTitle>
+              <EmptyDescription>
+                {isTrash
+                  ? "Deleted items will appear here before they are gone forever."
+                  : "Try adjusting the type, category, or tag filters."}
+              </EmptyDescription>
+            </EmptyHeader>
+          </Empty>
+        ) : isTrash ? (
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-muted/40 hover:bg-muted/40">
+                <TableHead className="pl-4">Name</TableHead>
+                <TableHead>Website</TableHead>
+                <TableHead>Category</TableHead>
+                <TableHead>Updated</TableHead>
+                <TableHead className="w-0" />
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {trash.map((item) => (
+                <TableRow key={item.id}>
+                  <TableCell className="pl-4">
+                    <div className="flex items-center gap-3">
+                      <ItemIcon />
+                      <span className="font-medium">{item.name}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">
+                    {item.website}
+                  </TableCell>
+                  <TableCell>
+                    <Badge className={categoryStyles[item.category]}>
+                      {item.category}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">
+                    {item.updatedLabel}
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center justify-end gap-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => onRestore(item.id)}
+                      >
+                        <RotateCcwIcon data-icon="inline-start" />
+                        Restore
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => onDeleteForever(item.id)}
+                      >
+                        <Trash2Icon data-icon="inline-start" />
+                        Delete
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-muted/40 hover:bg-muted/40">
+                <TableHead className="w-10 pl-4">
+                  <Checkbox
+                    aria-label="Select all items"
+                    checked={allSelected}
+                    indeterminate={someSelected && !allSelected}
+                    onCheckedChange={(checked) => toggleAll(checked === true)}
+                  />
+                </TableHead>
+                <TableHead className="w-10" />
+                <TableHead>Name</TableHead>
+                <TableHead>Website</TableHead>
+                <TableHead>Category</TableHead>
+                <TableHead>Updated</TableHead>
+                <TableHead className="w-0" />
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {visibleItems.map((item) => {
+                const selected = selectedIds.includes(item.id);
+                return (
+                  <TableRow
+                    key={item.id}
+                    data-state={selected ? "selected" : undefined}
+                  >
+                    <TableCell className="pl-4">
+                      <Checkbox
+                        aria-label={`Select ${item.name}`}
+                        checked={selected}
+                        onCheckedChange={() => toggleSelected(item.id)}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        aria-label={
+                          item.favorite
+                            ? `Unfavorite ${item.name}`
+                            : `Favorite ${item.name}`
+                        }
+                        onClick={() => onToggleFavorite(item.id)}
+                      >
+                        <StarIcon
+                          className={cn(
+                            "text-muted-foreground",
+                            item.favorite && "fill-amber-400 text-amber-400",
+                          )}
+                        />
+                      </Button>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-3">
+                        <ItemIcon />
+                        <span className="font-medium">{item.name}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <a
+                        href={item.website}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-muted-foreground underline-offset-4 hover:text-primary hover:underline"
+                      >
+                        {item.website}
+                      </a>
+                    </TableCell>
+                    <TableCell>
+                      <Badge className={categoryStyles[item.category]}>
+                        {item.category}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {item.updatedLabel}
+                    </TableCell>
+                    <TableCell>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger
+                          render={
+                            <Button
+                              variant="ghost"
+                              size="icon-sm"
+                              aria-label={`Actions for ${item.name}`}
+                            />
+                          }
+                        >
+                          <MoreHorizontalIcon />
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent
+                          align="end"
+                          className="w-auto min-w-48"
+                        >
+                          <DropdownMenuGroup>
+                            <DropdownMenuLabel>{item.name}</DropdownMenuLabel>
+                          </DropdownMenuGroup>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuGroup>
+                            <DropdownMenuItem
+                              onClick={() =>
+                                toast.add({
+                                  title: item.name,
+                                  description: item.website,
+                                  type: "info",
+                                })
+                              }
+                            >
+                              <EyeIcon /> View
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() =>
+                                copyToClipboard("Username", item.username)
+                              }
+                            >
+                              <UserIcon /> Copy Username
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() =>
+                                copyToClipboard("Password", "••••••••••")
+                              }
+                            >
+                              <KeyIcon /> Copy Password
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() =>
+                                toast.add({
+                                  title: "Editor coming soon",
+                                  description: `Editing ${item.name} is not available in the demo yet.`,
+                                  type: "info",
+                                })
+                              }
+                            >
+                              <PencilIcon /> Edit
+                            </DropdownMenuItem>
+                          </DropdownMenuGroup>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            variant="destructive"
+                            onClick={() => onTrash(item.id)}
+                          >
+                            <Trash2Icon /> Move to Trash
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        )}
+
+        <div className="border-t py-3 text-center text-sm text-muted-foreground">
+          Showing {rowCount} {rowCount === 1 ? "item" : "items"}
+        </div>
+      </div>
+    </main>
+  );
+}

@@ -22,7 +22,7 @@ export default async function VerifyEmailPage({
     email && EMAIL_PATTERN.test(email) ? email : "you@example.com";
 
   return (
-    <main className="flex flex-1 items-center justify-center bg-muted/50 px-4 pb-10 sm:px-6">
+    <main className="flex flex-1 items-center justify-center bg-muted/50 px-4 sm:px-6">
       <VerifyEmailCard email={targetEmail} />
     </main>
   );

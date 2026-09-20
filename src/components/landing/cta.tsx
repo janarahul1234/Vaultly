@@ -11,12 +11,12 @@ export function CallToAction() {
       <div className="relative mx-auto flex w-full max-w-6xl flex-col items-center gap-4 overflow-hidden rounded-3xl bg-primary/5 px-6 py-16 text-center lg:py-20">
         {/* Decorative floating tiles */}
         <div className="pointer-events-none absolute top-1/2 left-8 hidden -translate-y-1/2 -rotate-12 lg:block">
-          <span className="flex size-18 items-center justify-center rounded-2xl bg-primary/10 text-primary border border-white shadow-lg shadow-primary/10">
+          <span className="flex size-18 items-center justify-center rounded-2xl bg-primary/10 text-primary border border-background dark:border-primary/20 shadow-lg shadow-primary/10">
             <LockKeyholeIcon size={32} />
           </span>
         </div>
         <div className="pointer-events-none absolute top-1/2 right-8 hidden translate-y-[-25%] rotate-12 lg:block">
-          <span className="flex size-18 items-center justify-center rounded-2xl bg-primary/10 text-primary border border-white shadow-lg shadow-primary/10">
+          <span className="flex size-18 items-center justify-center rounded-2xl bg-primary/10 text-primary border border-background dark:border-primary/20 shadow-lg shadow-primary/10">
             <FolderOpenIcon size={32} />
           </span>
         </div>

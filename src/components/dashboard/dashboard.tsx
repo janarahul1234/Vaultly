@@ -10,6 +10,7 @@ import {
 import { EditItemSheet, type ItemEditDraft } from "@/components/dashboard/edit-item-sheet";
 import { DeleteItemDialog } from "@/components/dashboard/delete-item-dialog";
 import { PasswordsPanel } from "@/components/dashboard/passwords-panel";
+import { SidebarProvider } from "@/components/ui/sidebar";
 import { ViewItemSheet } from "@/components/dashboard/view-item-sheet";
 import {
   formatVaultDate,
@@ -260,8 +261,7 @@ export function Dashboard() {
                 type: draft.type,
                 password: draft.password || undefined,
                 notes: draft.notes || undefined,
-                updatedAt: 0,
-                updatedLabel: "Just now",
+                // Keep the original sort value — only a rename re-sorts.
                 updatedAtLabel: nowLabel,
               }
             : item,
@@ -290,31 +290,36 @@ export function Dashboard() {
     });
   }, [vaultLocked]);
 
+  // SidebarProvider is a flex ROW wrapper: the sidebar rail sits beside a
+  // column that holds the full-width top bar and the main content.
   return (
-    <div className="flex min-h-svh flex-col font-sans">
-      <DashboardHeader items={items} />
-      <div className="flex w-full flex-1">
-        <DashboardSidebar
-          activeNav={activeNav}
-          onNavChange={setActiveNav}
-          counts={counts}
-          vaultLocked={vaultLocked}
-          onToggleLock={toggleLock}
-          usedItems={items.length}
-          capacity={vaultCapacity}
-        />
-        <PasswordsPanel
-          items={items}
-          trash={trash}
-          activeNav={activeNav}
-          onToggleFavorite={toggleFavorite}
-          onTrash={requestTrashById}
-          onRestore={restoreItem}
-          onDeleteForever={requestForeverById}
-          onAddItem={openAddItem}
-          onView={openViewItem}
-          onEdit={openEditItem}
-        />
+    <SidebarProvider className="min-h-svh font-sans">
+      <DashboardSidebar
+        activeNav={activeNav}
+        onNavChange={setActiveNav}
+        counts={counts}
+        vaultLocked={vaultLocked}
+        onToggleLock={toggleLock}
+        usedItems={items.length}
+        capacity={vaultCapacity}
+      />
+      <div className="flex min-w-0 flex-1 flex-col">
+        <DashboardHeader items={items} />
+        {/* Plain column instead of SidebarInset — PasswordsPanel is the `main`. */}
+        <div className="flex min-w-0 flex-1">
+          <PasswordsPanel
+            items={items}
+            trash={trash}
+            activeNav={activeNav}
+            onToggleFavorite={toggleFavorite}
+            onTrash={requestTrashById}
+            onRestore={restoreItem}
+            onDeleteForever={requestForeverById}
+            onAddItem={openAddItem}
+            onView={openViewItem}
+            onEdit={openEditItem}
+          />
+        </div>
       </div>
       <ViewItemSheet
         open={!!viewItem}
@@ -347,6 +352,6 @@ export function Dashboard() {
         onItemTypeChange={selectAddItemType}
         onSave={saveItem}
       />
-    </div>
+    </SidebarProvider>
   );
 }

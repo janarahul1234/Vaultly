@@ -181,6 +181,23 @@ export function PasswordsPanel({
     );
   }, [items, activeNav, typeFilter, categoryFilter, tagFilter, sortValue]);
 
+  // Categories / Tags nav renders true grouped sections, matching the
+  // "grouped by…" subtitle — derived during render, not state.
+  const groupedItems = useMemo(() => {
+    if (activeNav !== "categories" && activeNav !== "tags") return null;
+    const groups = new Map<string, VaultItem[]>();
+    for (const item of visibleItems) {
+      const keys =
+        activeNav === "categories" ? [item.category] : item.tags;
+      for (const key of keys) {
+        const group = groups.get(key);
+        if (group) group.push(item);
+        else groups.set(key, [item]);
+      }
+    }
+    return [...groups.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+  }, [activeNav, visibleItems]);
+
   // Functional setState keeps the callbacks stable (rerender-functional-setstate).
   const toggleSelected = useCallback((id: string) => {
     setSelectedIds((prev) =>
@@ -207,6 +224,70 @@ export function PasswordsPanel({
   const heading = navHeadings[activeNav];
   const isTrash = activeNav === "trash";
   const rowCount = isTrash ? trash.length : visibleItems.length;
+
+  // Shared row content for the flat and grouped tables (hoisted JSX factory,
+  // rendering-hoist-jsx) so both views stay in sync.
+  const dataCells = (item: VaultItem) => (
+    <>
+      <TableCell>
+        <Button
+          variant="ghost"
+          size="icon"
+          aria-label={
+            item.favorite
+              ? `Unfavorite ${item.name}`
+              : `Favorite ${item.name}`
+          }
+          aria-pressed={item.favorite}
+          onClick={() => onToggleFavorite(item.id)}
+        >
+          <StarIcon
+            className={cn(
+              "text-muted-foreground",
+              item.favorite && "fill-amber-400 text-amber-400",
+            )}
+          />
+        </Button>
+      </TableCell>
+      <TableCell>
+        <div className="flex items-center gap-3">
+          <ItemIcon iconKey={item.iconKey} />
+          <span className="font-medium">{item.name}</span>
+        </div>
+      </TableCell>
+      <TableCell>
+        {item.website ? (
+          <a
+            href={item.website}
+            target="_blank"
+            rel="noreferrer"
+            className="text-muted-foreground underline-offset-4 hover:text-primary hover:underline"
+          >
+            {item.website}
+          </a>
+        ) : (
+          <span className="text-muted-foreground">—</span>
+        )}
+      </TableCell>
+      <TableCell>
+        <Badge className={categoryStyles[item.category]}>
+          {item.category}
+        </Badge>
+      </TableCell>
+      <TableCell className="text-muted-foreground">
+        {item.updatedLabel}
+      </TableCell>
+      <TableCell>
+        <ItemActionsDropdown
+          item={item}
+          onView={onView}
+          onEdit={onEdit}
+          onToggleFavorite={onToggleFavorite}
+          onTrash={onTrash}
+        />
+      </TableCell>
+    </>
+  );
 
   return (
     <main className="min-w-0 flex-1 px-4 py-6 md:px-8">
@@ -298,6 +379,55 @@ export function PasswordsPanel({
               </EmptyDescription>
             </EmptyHeader>
           </Empty>
+        ) : groupedItems ? (
+          <div className="flex flex-col">
+            {groupedItems.map(([groupName, groupItems], index) => (
+              <section key={groupName} aria-label={groupName}>
+                <div
+                  className={cn(
+                    "flex items-center gap-2 bg-muted/40 px-4 py-2",
+                    index > 0 && "border-t",
+                  )}
+                >
+                  {activeNav === "categories" ? (
+                    <FolderIcon className="size-4 text-muted-foreground" />
+                  ) : (
+                    <TagIcon className="size-4 text-muted-foreground" />
+                  )}
+                  <h2 className="text-sm font-medium">{groupName}</h2>
+                  <span className="text-sm text-muted-foreground tabular-nums">
+                    {groupItems.length}
+                  </span>
+                </div>
+                <Table>
+                  <TableHeader>
+                    {/* Hidden but measured by the table layout, keeping column
+                        widths consistent across groups. */}
+                    <TableRow className="hidden">
+                      <TableHead className="w-10" />
+                      <TableHead>Name</TableHead>
+                      <TableHead>Website</TableHead>
+                      <TableHead>Category</TableHead>
+                      <TableHead>Updated</TableHead>
+                      <TableHead className="w-0" />
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {groupItems.map((item) => (
+                      <TableRow
+                        key={`${groupName}-${item.id}`}
+                        data-state={
+                          selectedIds.includes(item.id) ? "selected" : undefined
+                        }
+                      >
+                        {dataCells(item)}
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </section>
+            ))}
+          </div>
         ) : isTrash ? (
           <Table>
             <TableHeader>
@@ -388,62 +518,7 @@ export function PasswordsPanel({
                         onCheckedChange={() => toggleSelected(item.id)}
                       />
                     </TableCell>
-                    <TableCell>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        aria-label={
-                          item.favorite
-                            ? `Unfavorite ${item.name}`
-                            : `Favorite ${item.name}`
-                        }
-                        onClick={() => onToggleFavorite(item.id)}
-                      >
-                        <StarIcon
-                          className={cn(
-                            "text-muted-foreground",
-                            item.favorite && "fill-amber-400 text-amber-400",
-                          )}
-                        />
-                      </Button>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-3">
-                        <ItemIcon iconKey={item.iconKey} />
-                        <span className="font-medium">{item.name}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      {item.website ? (
-                        <a
-                          href={item.website}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="text-muted-foreground underline-offset-4 hover:text-primary hover:underline"
-                        >
-                          {item.website}
-                        </a>
-                      ) : (
-                        <span className="text-muted-foreground">—</span>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <Badge className={categoryStyles[item.category]}>
-                        {item.category}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {item.updatedLabel}
-                    </TableCell>
-                    <TableCell>
-                      <ItemActionsDropdown
-                        item={item}
-                        onView={onView}
-                        onEdit={onEdit}
-                        onToggleFavorite={onToggleFavorite}
-                        onTrash={onTrash}
-                      />
-                    </TableCell>
+                    {dataCells(item)}
                   </TableRow>
                 );
               })}

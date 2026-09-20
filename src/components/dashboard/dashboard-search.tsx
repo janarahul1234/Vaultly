@@ -18,7 +18,13 @@ import type { VaultItem } from "@/components/dashboard/data";
 import { SearchIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-export function DashboardSearch({ items }: { items: VaultItem[] }) {
+export function DashboardSearch({
+  items,
+  shortcut = "⌘ K",
+}: {
+  items: VaultItem[];
+  shortcut?: string;
+}) {
   const [open, setOpen] = useState(false);
 
   // Single global keydown listener for the whole app (client-event-listeners).
@@ -47,11 +53,19 @@ export function DashboardSearch({ items }: { items: VaultItem[] }) {
       <Button
         variant="outline"
         onClick={() => setOpen(true)}
-        className="h-9 w-full justify-start gap-2 px-3 text-muted-foreground"
+        className="h-9 w-full min-w-0 justify-start gap-2 px-3 text-muted-foreground"
       >
         <SearchIcon data-icon="inline-start" />
-        <span className="truncate">Search passwords, websites, or notes...</span>
-        <Kbd className="ml-auto hidden sm:inline-flex">⌘ K</Kbd>
+        {/* Shorter placeholder on narrow viewports keeps the header from overflowing. */}
+        <span className="hidden truncate sm:inline">
+          Search passwords, websites, or notes...
+        </span>
+        <span className="truncate sm:hidden">Search...</span>
+        <Kbd className="ml-auto hidden shrink-0 sm:inline-flex">
+          {shortcut.split(" ").map((key) => (
+            <span key={key}>{key}</span>
+          ))}
+        </Kbd>
       </Button>
 
       <CommandDialog

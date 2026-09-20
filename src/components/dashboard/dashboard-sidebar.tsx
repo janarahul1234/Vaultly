@@ -1,10 +1,18 @@
 "use client";
 
+import Link from "next/link";
+import { VaultLogo } from "@/components/landing/brand-icons";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarHeader,
+} from "@/components/ui/sidebar";
 import { toast } from "@/components/ui/toast";
 import type { NavKey } from "@/components/dashboard/data";
 import { cn } from "@/lib/utils";
@@ -63,8 +71,25 @@ export function DashboardSidebar({
 }) {
   const usagePercent = Math.min(100, Math.round((usedItems / capacity) * 100));
 
+  // Full-height rail beside the content column (canonical shadcn split:
+  // the rail owns its own logo header). Mobile: offcanvas lets the shadcn
+  // Sidebar swap itself for a Sheet opened by the header's SidebarTrigger —
+  // `collapsible="none"` would skip that.
   return (
-    <aside className="sticky top-16 hidden h-[calc(100svh-4rem)] w-64 shrink-0 flex-col border-r bg-sidebar px-3 py-6 md:flex">
+    <Sidebar side="left" variant="sidebar" collapsible="offcanvas" className="border-r">
+      <SidebarHeader className="h-16 shrink-0 flex-row items-center gap-2 border-b px-6">
+        <Link
+          href="/"
+          aria-label="Vaultly home"
+          className="flex items-center gap-2"
+        >
+          <VaultLogo className="text-lg" />
+          <Badge variant="secondary" className="font-normal">
+            Personal
+          </Badge>
+        </Link>
+      </SidebarHeader>
+      <SidebarContent className="px-3 py-6">
       <nav className="flex flex-col gap-1" aria-label="Vault sections">
         {primaryNav.map((item) => {
           const Icon = item.icon;
@@ -161,6 +186,7 @@ export function DashboardSidebar({
           </CardContent>
         </Card>
       </div> */}
-    </aside>
+      </SidebarContent>
+    </Sidebar>
   );
 }

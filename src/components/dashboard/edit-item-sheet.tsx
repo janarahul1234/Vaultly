@@ -1,6 +1,22 @@
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
+import {
+  CopyIcon,
+  ExternalLinkIcon,
+  EyeIcon,
+  EyeOffIcon,
+  FolderIcon,
+  KeyRoundIcon,
+  PlusIcon,
+  StickyNoteIcon,
+  Trash2Icon,
+  XIcon,
+} from "lucide-react";
+
+import { cn } from "@/lib/utils";
+
+import { ItemIcon } from "@/components/dashboard/item-icon";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -37,25 +53,12 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/components/ui/toast";
-import { ItemIcon } from "@/components/dashboard/item-icon";
+
 import {
   type VaultCategory,
   type VaultItem,
   type VaultItemType,
 } from "@/components/dashboard/data";
-import { cn } from "@/lib/utils";
-import {
-  CopyIcon,
-  ExternalLinkIcon,
-  EyeIcon,
-  EyeOffIcon,
-  FolderIcon,
-  KeyRoundIcon,
-  PlusIcon,
-  StickyNoteIcon,
-  Trash2Icon,
-  XIcon,
-} from "lucide-react";
 
 // Editable subset of a VaultItem — the Dashboard merges this back into the
 // stored record and owns timestamps/id, mirroring the ItemDraft contract.
@@ -144,7 +147,10 @@ function CategoryField({
       <FieldLabel htmlFor="edit-category">
         Category <span className="text-muted-foreground">(optional)</span>
       </FieldLabel>
-      <Select value={value || null} onValueChange={(next) => onValueChange((next as string) ?? "")}>
+      <Select
+        value={value || null}
+        onValueChange={(next) => onValueChange((next as string) ?? "")}
+      >
         <SelectTrigger id="edit-category" className="w-full font-sans">
           <FolderIcon className="text-muted-foreground" />
           <SelectValue placeholder="Select a category" />
@@ -227,7 +233,7 @@ function TagsField({
           <Button
             type="button"
             variant="outline"
-            size="sm"
+            size="xs"
             onClick={() => setAdding(true)}
           >
             <PlusIcon data-icon="inline-start" />
@@ -322,7 +328,9 @@ function EditItemDetail({
     >
       <Tabs
         value={tab}
-        onValueChange={(value) => setTab(value as Exclude<VaultItemType, "card">)}
+        onValueChange={(value) =>
+          setTab(value as Exclude<VaultItemType, "card">)
+        }
         className="min-h-0 flex-1 gap-0"
       >
         <TabsList
@@ -331,14 +339,14 @@ function EditItemDetail({
         >
           <TabsTrigger
             value="login"
-            className="gap-2 text-sm data-active:text-primary data-active:after:bg-primary"
+            className="gap-2 text-sm data-active:text-primary data-active:after:bg-primary hover:text-primary"
           >
             <KeyRoundIcon />
             Login / Password
           </TabsTrigger>
           <TabsTrigger
             value="note"
-            className="gap-2 text-sm data-active:text-primary data-active:after:bg-primary"
+            className="gap-2 text-sm data-active:text-primary data-active:after:bg-primary hover:text-primary"
           >
             <StickyNoteIcon />
             Secure Note
@@ -366,7 +374,8 @@ function EditItemDetail({
 
             <Field>
               <FieldLabel htmlFor="edit-website">
-                Website <span className="text-muted-foreground">(optional)</span>
+                Website{" "}
+                <span className="text-muted-foreground">(optional)</span>
               </FieldLabel>
               <InputGroup>
                 <InputGroupInput
@@ -378,7 +387,7 @@ function EditItemDetail({
                 />
                 <InputGroupAddon align="inline-end">
                   <InputGroupButton
-                    size="icon-sm"
+                    size="icon-xs"
                     aria-label="Open website"
                     onClick={openWebsite}
                   >
@@ -402,7 +411,7 @@ function EditItemDetail({
                 />
                 <InputGroupAddon align="inline-end">
                   <InputGroupButton
-                    size="icon-sm"
+                    size="icon-xs"
                     aria-label="Copy username"
                     onClick={() => copyToClipboard("Username", username)}
                   >
@@ -430,7 +439,7 @@ function EditItemDetail({
                 />
                 <InputGroupAddon align="inline-end">
                   <InputGroupButton
-                    size="icon-sm"
+                    size="icon-xs"
                     aria-label={
                       showPassword ? "Hide password" : "Show password"
                     }
@@ -439,7 +448,7 @@ function EditItemDetail({
                     {showPassword ? <EyeOffIcon /> : <EyeIcon />}
                   </InputGroupButton>
                   <InputGroupButton
-                    size="icon-sm"
+                    size="icon-xs"
                     aria-label="Copy password"
                     onClick={() => copyToClipboard("Password", password)}
                   >
@@ -459,7 +468,7 @@ function EditItemDetail({
                         strengthMeta[strength].progress,
                       )}
                     />
-                    <span className="text-sm font-medium">
+                    <span className="text-sm">
                       {strengthMeta[strength].label}
                     </span>
                   </div>
@@ -530,14 +539,15 @@ function EditItemDetail({
       <SheetFooter className="shrink-0 flex-row items-center gap-2 border-t">
         <Button
           type="button"
-          variant="outline"
-          className="border-destructive/30 text-destructive hover:bg-destructive/10 hover:text-destructive"
+          variant="destructive"
           onClick={() => onDelete(item.id)}
         >
           <Trash2Icon data-icon="inline-start" />
           Delete
         </Button>
-        <SheetClose render={<Button type="button" variant="outline" className="ml-auto" />}>
+        <SheetClose
+          render={<Button type="button" variant="ghost" className="ml-auto" />}
+        >
           Cancel
         </SheetClose>
         <Button type="submit">Save Changes</Button>
@@ -579,12 +589,12 @@ export function EditItemSheet({
         {item && (
           <>
             <SheetHeader className="flex-row items-center gap-3 px-6 pt-6 pb-3 text-left">
-              <ItemIcon iconKey={item.iconKey} className="size-11 rounded-xl" />
+              <ItemIcon iconKey={item.iconKey} className="size-12 rounded-xl" />
               <div className="flex flex-col gap-0.5">
                 <SheetTitle className="text-lg font-semibold">
                   Edit Item
                 </SheetTitle>
-                <SheetDescription>
+                <SheetDescription className="font-mono">
                   Update your password or details.
                 </SheetDescription>
               </div>

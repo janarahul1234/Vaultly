@@ -1,6 +1,8 @@
 "use client";
 
 import { useCallback, useState } from "react";
+import { Trash2Icon } from "lucide-react";
+
 import {
   AlertDialog,
   AlertDialogAction,
@@ -13,8 +15,8 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+
 import type { VaultItem } from "@/components/dashboard/data";
-import { Trash2Icon } from "lucide-react";
 
 /**
  * Destructive confirmation for removing a vault item. Centered AlertDialog
@@ -67,28 +69,27 @@ export function DeleteItemDialog({
         {/* size="sm" keeps the base header as a centered single-column stack
             (the two-column media layout is gated on size="default"). */}
         <AlertDialogHeader className="gap-0">
-          <AlertDialogMedia className="mx-auto mb-5 size-16 rounded-full bg-destructive/10 text-destructive [&_svg]:size-7">
+          <AlertDialogMedia className="mx-auto mb-5 size-14 rounded-full bg-destructive/10 text-destructive [&_svg]:size-7">
             <Trash2Icon />
           </AlertDialogMedia>
           <AlertDialogTitle className="font-heading text-xl font-semibold">
             {title}
           </AlertDialogTitle>
-          <AlertDialogDescription className="mt-2 text-base">
+          <AlertDialogDescription className="mt-2">
             {item ? (
               <>
                 Are you sure you want to delete{" "}
                 <span className="font-medium text-foreground">
                   &ldquo;{item.name}&rdquo;
                 </span>
-                ? <br className="hidden sm:block" /> This action cannot be
-                undone.
+                ? This action cannot be undone.
               </>
             ) : (
               "This action cannot be undone."
             )}
           </AlertDialogDescription>
         </AlertDialogHeader>
-        <AlertDialogFooter className="mx-0 mb-0 mt-7 grid grid-cols-2 border-0 bg-transparent px-0 pb-0">
+        <AlertDialogFooter className="mx-0 mb-0 mt-2 grid grid-cols-2 border-0 bg-transparent px-0 pb-0">
           <AlertDialogCancel className="w-full">Cancel</AlertDialogCancel>
           {/* Solid red per the design — overrides the tinted destructive variant. */}
           <AlertDialogAction

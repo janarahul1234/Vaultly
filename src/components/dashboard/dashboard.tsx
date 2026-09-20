@@ -1,33 +1,36 @@
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
-import { AddItemSheet, type ItemDraft } from "@/components/dashboard/add-item-sheet";
-import { DashboardHeader } from "@/components/dashboard/dashboard-header";
+
 import {
-  DashboardSidebar,
-  type NavCounts,
-} from "@/components/dashboard/dashboard-sidebar";
-import { EditItemSheet, type ItemEditDraft } from "@/components/dashboard/edit-item-sheet";
+  AddItemSheet,
+  type ItemDraft,
+} from "@/components/dashboard/add-item-sheet";
+import { DashboardHeader } from "@/components/dashboard/dashboard-header";
+import { DashboardSidebar } from "@/components/dashboard/dashboard-sidebar";
 import { DeleteItemDialog } from "@/components/dashboard/delete-item-dialog";
+import {
+  EditItemSheet,
+  type ItemEditDraft,
+} from "@/components/dashboard/edit-item-sheet";
 import { PasswordsPanel } from "@/components/dashboard/passwords-panel";
-import { SidebarProvider } from "@/components/ui/sidebar";
 import { ViewItemSheet } from "@/components/dashboard/view-item-sheet";
+import { SidebarProvider } from "@/components/ui/sidebar";
+import { toast } from "@/components/ui/toast";
+
 import {
   formatVaultDate,
-  vaultCapacity,
   vaultItems,
   type NavKey,
   type VaultItem,
   type VaultItemType,
 } from "@/components/dashboard/data";
-import { toast } from "@/components/ui/toast";
 
 type AddItemState = {
   open: boolean;
   type: Exclude<VaultItemType, "card">;
 };
 
-// Which confirmation the delete dialog is standing in front of.
 type DeleteTarget = {
   item: VaultItem;
   mode: "trash" | "forever";
@@ -42,7 +45,6 @@ export function Dashboard() {
   });
   const { items, trash } = vault;
   const [activeNav, setActiveNav] = useState<NavKey>("all");
-  const [vaultLocked, setVaultLocked] = useState(true);
   const [addItemState, setAddItemState] = useState<AddItemState>({
     open: false,
     type: "login",
@@ -51,7 +53,7 @@ export function Dashboard() {
   const [editItemId, setEditItemId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<DeleteTarget>(null);
 
-  const counts = useMemo<NavCounts>(
+  const counts = useMemo<Record<NavKey, number>>(
     () => ({
       all: items.length,
       favorites: items.filter((item) => item.favorite).length,
@@ -230,9 +232,7 @@ export function Dashboard() {
     };
     setVault((prev) => ({
       ...prev,
-      items: [...prev.items, item].sort((a, b) =>
-        a.name.localeCompare(b.name),
-      ),
+      items: [...prev.items, item].sort((a, b) => a.name.localeCompare(b.name)),
     }));
     setAddItemState((prev) => ({ ...prev, open: false }));
     toast.add({
@@ -261,7 +261,6 @@ export function Dashboard() {
                 type: draft.type,
                 password: draft.password || undefined,
                 notes: draft.notes || undefined,
-                // Keep the original sort value — only a rename re-sorts.
                 updatedAtLabel: nowLabel,
               }
             : item,
@@ -276,36 +275,18 @@ export function Dashboard() {
     });
   }, []);
 
-  // Toast fires outside the state updater — side effects inside an updater
-  // run twice under Strict Mode and trigger setState-during-render errors.
-  const toggleLock = useCallback(() => {
-    const next = !vaultLocked;
-    setVaultLocked(next);
-    toast.add({
-      title: next ? "Vault locked" : "Vault unlocked",
-      description: next
-        ? "Your data is encrypted again."
-        : "Decryption started for this session.",
-      type: "success",
-    });
-  }, [vaultLocked]);
-
   // SidebarProvider is a flex ROW wrapper: the sidebar rail sits beside a
   // column that holds the full-width top bar and the main content.
   return (
-    <SidebarProvider className="min-h-svh font-sans">
+    <SidebarProvider className="min-h-svh font-headings">
       <DashboardSidebar
+        counts={counts}
         activeNav={activeNav}
         onNavChange={setActiveNav}
-        counts={counts}
-        vaultLocked={vaultLocked}
-        onToggleLock={toggleLock}
-        usedItems={items.length}
-        capacity={vaultCapacity}
       />
       <div className="flex min-w-0 flex-1 flex-col">
         <DashboardHeader items={items} />
-        {/* Plain column instead of SidebarInset — PasswordsPanel is the `main`. */}
+
         <div className="flex min-w-0 flex-1">
           <PasswordsPanel
             items={items}
@@ -321,6 +302,7 @@ export function Dashboard() {
           />
         </div>
       </div>
+
       <ViewItemSheet
         open={!!viewItem}
         onOpenChange={closeViewItem}
@@ -328,6 +310,7 @@ export function Dashboard() {
         onRemoveTag={removeTag}
         onEdit={openEditItem}
       />
+
       <EditItemSheet
         open={!!editItem}
         onOpenChange={closeEditItem}
@@ -335,6 +318,7 @@ export function Dashboard() {
         onSave={saveEdit}
         onDelete={requestTrashById}
       />
+
       <DeleteItemDialog
         item={deleteTarget?.item ?? null}
         open={!!deleteTarget}
@@ -345,6 +329,7 @@ export function Dashboard() {
           deleteTarget?.mode === "forever" ? "Delete forever" : undefined
         }
       />
+
       <AddItemSheet
         open={addItemState.open}
         onOpenChange={closeAddItem}

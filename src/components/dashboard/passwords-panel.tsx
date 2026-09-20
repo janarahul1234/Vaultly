@@ -1,6 +1,26 @@
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
+import Link from "next/link";
+import {
+  ArrowUpDownIcon,
+  ChevronDownIcon,
+  FolderIcon,
+  KeyRound,
+  KeyRoundIcon,
+  LayoutGridIcon,
+  PlusIcon,
+  RotateCcwIcon,
+  StarIcon,
+  StickyNote,
+  TagIcon,
+  Trash2Icon,
+} from "lucide-react";
+
+import { cn } from "@/lib/utils";
+
+import { ItemActionsDropdown } from "@/components/dashboard/item-actions-dropdown";
+import { ItemIcon } from "@/components/dashboard/item-icon";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ButtonGroup } from "@/components/ui/button-group";
@@ -35,8 +55,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { ItemIcon } from "@/components/dashboard/item-icon";
-import { ItemActionsDropdown } from "@/components/dashboard/item-actions-dropdown";
+
 import {
   categoryStyles,
   navHeadings,
@@ -45,21 +64,6 @@ import {
   type VaultItem,
   type VaultItemType,
 } from "@/components/dashboard/data";
-import { cn } from "@/lib/utils";
-import {
-  ArrowUpDownIcon,
-  ChevronDownIcon,
-  CreditCardIcon,
-  FolderIcon,
-  KeyRoundIcon,
-  LayoutGridIcon,
-  PlusIcon,
-  RotateCcwIcon,
-  StarIcon,
-  StickyNoteIcon,
-  TagIcon,
-  Trash2Icon,
-} from "lucide-react";
 
 const typeOptions = ["All types", "Login", "Note", "Card"] as const;
 const sortOptions = ["Name", "Recently Updated"] as const;
@@ -187,8 +191,7 @@ export function PasswordsPanel({
     if (activeNav !== "categories" && activeNav !== "tags") return null;
     const groups = new Map<string, VaultItem[]>();
     for (const item of visibleItems) {
-      const keys =
-        activeNav === "categories" ? [item.category] : item.tags;
+      const keys = activeNav === "categories" ? [item.category] : item.tags;
       for (const key of keys) {
         const group = groups.get(key);
         if (group) group.push(item);
@@ -234,16 +237,14 @@ export function PasswordsPanel({
           variant="ghost"
           size="icon"
           aria-label={
-            item.favorite
-              ? `Unfavorite ${item.name}`
-              : `Favorite ${item.name}`
+            item.favorite ? `Unfavorite ${item.name}` : `Favorite ${item.name}`
           }
           aria-pressed={item.favorite}
           onClick={() => onToggleFavorite(item.id)}
         >
           <StarIcon
             className={cn(
-              "text-muted-foreground",
+              "text-muted-foreground size-4.5",
               item.favorite && "fill-amber-400 text-amber-400",
             )}
           />
@@ -257,22 +258,20 @@ export function PasswordsPanel({
       </TableCell>
       <TableCell>
         {item.website ? (
-          <a
+          <Link
             href={item.website}
             target="_blank"
             rel="noreferrer"
             className="text-muted-foreground underline-offset-4 hover:text-primary hover:underline"
           >
             {item.website}
-          </a>
+          </Link>
         ) : (
           <span className="text-muted-foreground">—</span>
         )}
       </TableCell>
       <TableCell>
-        <Badge className={categoryStyles[item.category]}>
-          {item.category}
-        </Badge>
+        <Badge className={categoryStyles[item.category]}>{item.category}</Badge>
       </TableCell>
       <TableCell className="text-muted-foreground">
         {item.updatedLabel}
@@ -293,35 +292,40 @@ export function PasswordsPanel({
     <main className="min-w-0 flex-1 px-4 py-6 md:px-8">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="flex flex-col gap-1">
-          <h1 className="font-heading text-2xl font-bold md:text-3xl">
-            {heading.title}
-          </h1>
-          <p className="text-muted-foreground">{heading.subtitle}</p>
+          <h1 className="font-heading text-2xl font-bold">{heading.title}</h1>
+          <p className="text-muted-foreground text-sm">{heading.subtitle}</p>
         </div>
 
         <ButtonGroup>
-          <Button onClick={() => onAddItem("login")}>
+          <Button size="lg" onClick={() => onAddItem("login")}>
             <PlusIcon data-icon="inline-start" />
             Add Item
           </Button>
           <DropdownMenu>
             <DropdownMenuTrigger
               render={
-                <Button aria-label="More item options" className="px-2">
+                <Button
+                  size="lg"
+                  className="px-2"
+                  aria-label="More item options"
+                >
                   <ChevronDownIcon />
                 </Button>
               }
             />
             <DropdownMenuContent align="end" className="w-auto min-w-44">
               <DropdownMenuGroup>
-                <DropdownMenuItem onClick={() => onAddItem("login")}>
-                  <KeyRoundIcon /> New Password
+                <DropdownMenuItem
+                  className="px-3 py-2 gap-3 font-sans font-medium"
+                  onClick={() => onAddItem("login")}
+                >
+                  <KeyRound /> New Password
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onAddItem("note")}>
-                  <StickyNoteIcon /> New Note
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onAddItem("card")}>
-                  <CreditCardIcon /> New Card
+                <DropdownMenuItem
+                  className="px-3 py-2 gap-3 font-sans font-medium"
+                  onClick={() => onAddItem("note")}
+                >
+                  <StickyNote /> New Note
                 </DropdownMenuItem>
               </DropdownMenuGroup>
             </DropdownMenuContent>
@@ -526,7 +530,7 @@ export function PasswordsPanel({
           </Table>
         )}
 
-        <div className="border-t py-3 text-center text-sm text-muted-foreground">
+        <div className="border-t px-4 py-3 text-sm text-center text-muted-foreground">
           Showing {rowCount} {rowCount === 1 ? "item" : "items"}
         </div>
       </div>

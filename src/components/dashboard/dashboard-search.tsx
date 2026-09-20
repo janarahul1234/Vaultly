@@ -1,6 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { SearchIcon } from "lucide-react";
+
 import {
   Command,
   CommandDialog,
@@ -13,10 +15,10 @@ import {
 } from "@/components/ui/command";
 import { Kbd } from "@/components/ui/kbd";
 import { ItemIcon } from "@/components/dashboard/item-icon";
-import { toast } from "@/components/ui/toast";
-import type { VaultItem } from "@/components/dashboard/data";
-import { SearchIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { toast } from "@/components/ui/toast";
+
+import type { VaultItem } from "@/components/dashboard/data";
 
 export function DashboardSearch({
   items,
@@ -85,7 +87,10 @@ export function DashboardSearch({
                   value={`${item.name} ${item.website} ${item.username}`}
                   onSelect={() => handleSelect(item)}
                 >
-                  <ItemIcon iconKey={item.iconKey} className="size-6 rounded-md border-0" />
+                  <ItemIcon
+                    iconKey={item.iconKey}
+                    className="size-6 rounded-md border-0"
+                  />
                   <span className="truncate">{item.name}</span>
                   <CommandShortcut className="max-w-48 truncate">
                     {item.website}

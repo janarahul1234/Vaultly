@@ -1,6 +1,19 @@
 "use client";
 
 import { useCallback, useState } from "react";
+import {
+  CopyIcon,
+  ExternalLinkIcon,
+  EyeIcon,
+  EyeOffIcon,
+  FolderIcon,
+  KeyRoundIcon,
+  PencilIcon,
+  StickyNoteIcon,
+  XIcon,
+} from "lucide-react";
+
+import { ItemIcon } from "@/components/dashboard/item-icon";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
@@ -22,19 +35,8 @@ import {
 } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/components/ui/toast";
-import { ItemIcon } from "@/components/dashboard/item-icon";
+
 import type { VaultItem } from "@/components/dashboard/data";
-import {
-  CopyIcon,
-  ExternalLinkIcon,
-  EyeIcon,
-  EyeOffIcon,
-  FolderIcon,
-  KeyRoundIcon,
-  PencilIcon,
-  StickyNoteIcon,
-  XIcon,
-} from "lucide-react";
 
 // Fallback for demo items without a stored secret — keeps the password row
 // functional without inventing per-row data.
@@ -57,7 +59,15 @@ async function copyToClipboard(label: string, value: string) {
   }
 }
 
-function ReadOnlyTitleField({ id, label, value }: { id: string; label: string; value: string }) {
+function ReadOnlyTitleField({
+  id,
+  label,
+  value,
+}: {
+  id: string;
+  label: string;
+  value: string;
+}) {
   return (
     <Field>
       <FieldLabel htmlFor={id}>{label}</FieldLabel>
@@ -173,14 +183,14 @@ function ViewItemDetail({
         >
           <TabsTrigger
             value="login"
-            className="gap-2 text-sm data-active:text-primary data-active:after:bg-primary"
+            className="gap-2 text-sm data-active:text-primary data-active:after:bg-primary hover:text-primary"
           >
             <KeyRoundIcon />
             Login / Password
           </TabsTrigger>
           <TabsTrigger
             value="note"
-            className="gap-2 text-sm data-active:text-primary data-active:after:bg-primary"
+            className="gap-2 text-sm data-active:text-primary data-active:after:bg-primary hover:text-primary"
           >
             <StickyNoteIcon />
             Secure Note
@@ -189,21 +199,25 @@ function ViewItemDetail({
 
         <TabsContent value="login" className="flex-1 overflow-y-auto p-6">
           <FieldGroup>
-            <ReadOnlyTitleField id="view-title" label="Title" value={item.name} />
+            <ReadOnlyTitleField
+              id="view-title"
+              label="Title"
+              value={item.name}
+            />
 
             <Field>
               <FieldLabel htmlFor="view-website">Website</FieldLabel>
               <InputGroup>
                 <InputGroupInput
                   id="view-website"
-                  readOnly
                   tabIndex={-1}
                   value={item.website}
                   placeholder="No website"
+                  readOnly
                 />
                 <InputGroupAddon align="inline-end">
                   <InputGroupButton
-                    size="icon-sm"
+                    size="icon-xs"
                     aria-label="Open website"
                     onClick={openWebsite}
                   >
@@ -218,13 +232,13 @@ function ViewItemDetail({
               <InputGroup>
                 <InputGroupInput
                   id="view-username"
-                  readOnly
                   tabIndex={-1}
                   value={item.username}
+                  readOnly
                 />
                 <InputGroupAddon align="inline-end">
                   <InputGroupButton
-                    size="icon-sm"
+                    size="icon-xs"
                     aria-label="Copy username"
                     onClick={() => copyToClipboard("Username", item.username)}
                   >
@@ -246,7 +260,7 @@ function ViewItemDetail({
                 />
                 <InputGroupAddon align="inline-end">
                   <InputGroupButton
-                    size="icon-sm"
+                    size="icon-xs"
                     aria-label={
                       showPassword ? "Hide password" : "Show password"
                     }
@@ -255,7 +269,7 @@ function ViewItemDetail({
                     {showPassword ? <EyeOffIcon /> : <EyeIcon />}
                   </InputGroupButton>
                   <InputGroupButton
-                    size="icon-sm"
+                    size="icon-xs"
                     aria-label="Copy password"
                     onClick={() => copyToClipboard("Password", passwordValue)}
                   >
@@ -286,16 +300,12 @@ function ViewItemDetail({
       </Tabs>
 
       <SheetFooter className="shrink-0 gap-3 border-t">
-        <div className="flex w-full items-center justify-between gap-2">
-          <SheetClose render={<Button variant="outline" />}>Close</SheetClose>
+        <div className="flex w-full justify-end gap-2">
+          <SheetClose render={<Button variant="ghost" />}>Close</SheetClose>
           <Button onClick={handleEdit}>
             <PencilIcon data-icon="inline-start" />
             Edit Item
           </Button>
-        </div>
-        <div className="flex flex-col gap-0.5 text-xs text-muted-foreground">
-          <p>Created • {item.createdAt ?? "—"}</p>
-          <p>Last updated • {item.updatedAtLabel ?? item.updatedLabel}</p>
         </div>
       </SheetFooter>
     </div>
@@ -324,12 +334,12 @@ export function ViewItemSheet({
         {item && (
           <>
             <SheetHeader className="flex-row items-center gap-3 px-6 pt-6 pb-3 text-left">
-              <ItemIcon iconKey={item.iconKey} className="size-11 rounded-xl" />
-              <div className="flex flex-col gap-0.5">
+              <ItemIcon iconKey={item.iconKey} className="size-12 rounded-xl" />
+              <div className="flex flex-col">
                 <SheetTitle className="text-lg font-semibold">
                   View Details
                 </SheetTitle>
-                <SheetDescription>
+                <SheetDescription className="font-mono">
                   View your saved information.
                 </SheetDescription>
               </div>

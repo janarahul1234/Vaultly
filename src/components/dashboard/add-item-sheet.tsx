@@ -227,7 +227,7 @@ function TagsField({
         />
         <InputGroupAddon align="inline-end">
           <InputGroupButton
-            size="icon-sm"
+            size="icon-xs"
             aria-label="Add tag"
             onClick={commit}
           >
@@ -286,12 +286,9 @@ export function AddItemSheet({
     setErrors({});
   }, []);
 
-  const addTag = useCallback(
-    (tag: string) => {
-      setTags((prev) => (prev.includes(tag) ? prev : [...prev, tag]));
-    },
-    [],
-  );
+  const addTag = useCallback((tag: string) => {
+    setTags((prev) => (prev.includes(tag) ? prev : [...prev, tag]));
+  }, []);
 
   const removeTag = useCallback((tag: string) => {
     setTags((prev) => prev.filter((x) => x !== tag));
@@ -346,15 +343,15 @@ export function AddItemSheet({
         className="w-full max-w-md gap-0 p-0 font-sans sm:max-w-md"
       >
         <SheetHeader className="flex-row items-center gap-3 px-6 pt-6 pb-3 text-left">
-          <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+          <span className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
             <LockIcon />
           </span>
-          <div className="flex flex-col gap-0.5">
+          <div className="flex flex-col">
             <SheetTitle className="text-lg font-semibold">
               Add New Item
             </SheetTitle>
-            <SheetDescription>
-              Save a new password or secure note.
+            <SheetDescription className="font-mono">
+              Save a new secure item.
             </SheetDescription>
           </div>
         </SheetHeader>
@@ -377,14 +374,14 @@ export function AddItemSheet({
             >
               <TabsTrigger
                 value="login"
-                className="gap-2 text-sm data-active:text-primary data-active:after:bg-primary"
+                className="gap-2 text-sm data-active:text-primary data-active:after:bg-primary hover:text-primary"
               >
                 <KeyRoundIcon />
                 Login / Password
               </TabsTrigger>
               <TabsTrigger
                 value="note"
-                className="gap-2 text-sm data-active:text-primary data-active:after:bg-primary"
+                className="gap-2 text-sm data-active:text-primary data-active:after:bg-primary hover:text-primary"
               >
                 <StickyNoteIcon />
                 Secure Note
@@ -412,7 +409,8 @@ export function AddItemSheet({
 
                 <Field>
                   <FieldLabel htmlFor="item-website">
-                    Website <span className="text-muted-foreground">(optional)</span>
+                    Website{" "}
+                    <span className="text-muted-foreground">(optional)</span>
                   </FieldLabel>
                   <InputGroup>
                     <InputGroupInput
@@ -424,7 +422,7 @@ export function AddItemSheet({
                     />
                     <InputGroupAddon align="inline-end">
                       <InputGroupButton
-                        size="icon-sm"
+                        size="icon-xs"
                         aria-label="Open website"
                         onClick={openWebsite}
                       >
@@ -465,7 +463,7 @@ export function AddItemSheet({
                     />
                     <InputGroupAddon align="inline-end">
                       <InputGroupButton
-                        size="icon-sm"
+                        size="icon-xs"
                         aria-label={
                           showPassword ? "Hide password" : "Show password"
                         }
@@ -474,7 +472,7 @@ export function AddItemSheet({
                         {showPassword ? <EyeOffIcon /> : <EyeIcon />}
                       </InputGroupButton>
                       <InputGroupButton
-                        size="icon-sm"
+                        size="icon-xs"
                         aria-label="Generate password"
                         onClick={() => {
                           setPassword(generatePassword());
@@ -507,11 +505,16 @@ export function AddItemSheet({
                 </Field>
 
                 <CategoryField value={category} onValueChange={setCategory} />
-                <TagsField tags={tags} onAddTag={addTag} onRemoveTag={removeTag} />
+                <TagsField
+                  tags={tags}
+                  onAddTag={addTag}
+                  onRemoveTag={removeTag}
+                />
 
                 <Field>
                   <FieldLabel htmlFor="item-notes">
-                    Notes <span className="text-muted-foreground">(optional)</span>
+                    Notes{" "}
+                    <span className="text-muted-foreground">(optional)</span>
                   </FieldLabel>
                   <Textarea
                     id="item-notes"
@@ -543,7 +546,11 @@ export function AddItemSheet({
                 </Field>
 
                 <CategoryField value={category} onValueChange={setCategory} />
-                <TagsField tags={tags} onAddTag={addTag} onRemoveTag={removeTag} />
+                <TagsField
+                  tags={tags}
+                  onAddTag={addTag}
+                  onRemoveTag={removeTag}
+                />
 
                 <Field data-invalid={!!errors.notes}>
                   <FieldLabel htmlFor="item-note-body">
@@ -566,10 +573,8 @@ export function AddItemSheet({
             </TabsContent>
           </Tabs>
 
-          <SheetFooter className="shrink-0 flex-row items-center justify-between gap-2 border-t">
-            <SheetClose render={<Button variant="outline" />}>
-              Cancel
-            </SheetClose>
+          <SheetFooter className="shrink-0 flex-row justify-end gap-2 border-t">
+            <SheetClose render={<Button variant="ghost" />}>Cancel</SheetClose>
             <Button type="submit">Save Item</Button>
           </SheetFooter>
         </form>

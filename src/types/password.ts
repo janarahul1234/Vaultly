@@ -100,3 +100,37 @@ export type TagsFieldProps = {
   onAddTag: (tag: string) => void;
   onRemoveTag: (tag: string) => void;
 };
+
+// ── Persistence contract (Supabase `public.vault_items`) ───────────────────
+
+/** Raw row shape as stored/returned by Postgres (snake_case). */
+export type VaultItemRow = {
+  id: string;
+  user_id: string;
+  type: VaultItemType;
+  name: string;
+  website: string | null;
+  username: string | null;
+  category: VaultCategory;
+  tags: string[];
+  favorite: boolean;
+  password: string | null;
+  notes: string | null;
+  icon_key: VaultIconKey;
+  /** ISO-8601 timestamps (serialized to strings across the RSC boundary). */
+  created_at: string;
+  updated_at: string;
+  deleted_at: string | null;
+};
+
+/**
+ * Result of a vault Server Action. On success the authoritative, freshly
+ * mapped row is returned so the client can reconcile its local state without
+ * a second read; on failure `message` carries a user-safe reason.
+ */
+export type VaultItemResult =
+  | { ok: true; item: VaultItem }
+  | { ok: false; message: string };
+
+/** Result for actions that don't need to hand a row back (e.g. hard delete). */
+export type VaultResult = { ok: true } | { ok: false; message: string };

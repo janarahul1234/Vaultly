@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
-import { Toaster } from "@/components/ui/toast";
 import { SigninForm } from "@/components/signin/signin-form";
 import { SignupShowcase } from "@/components/signup/signup-showcase";
 
@@ -32,7 +31,6 @@ export default function SignInPage() {
           <SigninForm />
         </section>
       </div>
-      <Toaster />
     </main>
   );
 }

@@ -13,12 +13,29 @@ type EmailOtpType =
   | "email_change"
   | "email";
 
+const EMAIL_OTP_TYPES = [
+  "signup",
+  "invite",
+  "magiclink",
+  "recovery",
+  "email_change",
+  "email",
+] as const;
+
+// Validate the attacker-controlled `type` at runtime instead of casting, so an
+// unexpected value is treated as absent rather than forwarded to `verifyOtp`.
+function isEmailOtpType(value: string | null): value is EmailOtpType {
+  return value !== null && (EMAIL_OTP_TYPES as readonly string[]).includes(value);
+}
+
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
 
   const code = searchParams.get("code");
   const tokenHash = searchParams.get("token_hash");
-  const type = searchParams.get("type") as EmailOtpType | null;
+  const type = isEmailOtpType(searchParams.get("type"))
+    ? searchParams.get("type")
+    : null;
   const next = searchParams.get("next") ?? "/dashboard";
   const error = searchParams.get("error") ?? searchParams.get("error_description");
 

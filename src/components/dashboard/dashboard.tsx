@@ -10,9 +10,12 @@ import { ViewItemSheet } from "@/components/dashboard/view-item-sheet";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { useDashboard } from "@/hooks/use-dashboard";
 
-export function Dashboard() {
-  // All vault state and handlers live in useDashboard — this component is
-  // purely presentational wiring.
+import type { VaultData } from "@/lib/supabase/vault-queries";
+
+export function Dashboard({ data }: { data: VaultData }) {
+  // Vault state and handlers live in useDashboard — this component is purely
+  // presentational wiring. `data` is the Server Component's initial read; the
+  // hook seeds from it once and reconciles every mutation from there.
   const {
     items,
     trash,
@@ -39,7 +42,7 @@ export function Dashboard() {
     removeTag,
     closeDeleteDialog,
     confirmDelete,
-  } = useDashboard();
+  } = useDashboard(data);
 
   // SidebarProvider is a flex ROW wrapper: the sidebar rail sits beside a
   // column that holds the full-width top bar and the main content.

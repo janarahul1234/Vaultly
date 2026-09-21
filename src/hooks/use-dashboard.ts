@@ -3,8 +3,16 @@
 import { useCallback, useMemo, useState } from "react";
 
 import { toast } from "@/components/ui/toast";
-import { formatVaultDate } from "@/lib/vault-helpers";
-import { vaultItems } from "@/data/password";
+import {
+  createVaultItem,
+  deleteVaultItemForever,
+  removeVaultItemTag,
+  restoreVaultItem,
+  toggleVaultItemFavorite,
+  trashVaultItem,
+  updateVaultItem,
+} from "@/lib/supabase/vault-actions";
+import type { VaultData } from "@/lib/supabase/vault-queries";
 import type {
   AddItemState,
   DeleteMode,
@@ -19,13 +27,21 @@ import type {
   VaultItemType,
 } from "@/types/password";
 
-export function useDashboard() {
-  // Single state object so trash moves stay one pure functional update —
-  // safe under Strict Mode double-invocation (rerender-functional-setstate).
-  const [vault, setVault] = useState({
-    items: vaultItems as VaultItem[],
-    trash: [] as VaultItem[],
-  });
+// Alphabetical ordering used whenever the list membership changes so a rename
+// or a restore keeps the table coherent.
+function byName(a: VaultItem, b: VaultItem) {
+  return a.name.localeCompare(b.name);
+}
+
+export function useDashboard(initial: VaultData) {
+  // Seeded once from the Server Component's data. Every mutation awaits its
+  // Server Action and reconciles from the authoritative returned row, so this
+  // client state stays consistent with Postgres without a re-read. Lazy init
+  // avoids rebuilding the object on every render (rerender-lazy-state-init).
+  const [vault, setVault] = useState(() => ({
+    items: initial.items,
+    trash: initial.trash,
+  }));
   const { items, trash } = vault;
   const [activeNav, setActiveNav] = useState<NavKey>("all");
   const [addItemState, setAddItemState] = useState<AddItemState>({
@@ -47,24 +63,34 @@ export function useDashboard() {
     [items, trash],
   );
 
-  const toggleFavorite = useCallback((id: string) => {
+  // Replaces a single active item with its server-authored successor, leaving
+  // order untouched (used by favorite/tag edits).
+  const upsertItem = useCallback((item: VaultItem) => {
     setVault((prev) => ({
       ...prev,
-      items: prev.items.map((item) =>
-        item.id === id ? { ...item, favorite: !item.favorite } : item,
-      ),
+      items: prev.items.map((x) => (x.id === item.id ? item : x)),
     }));
   }, []);
 
-  const moveToTrash = useCallback((id: string) => {
-    setVault((prev) => {
-      const target = prev.items.find((item) => item.id === id);
-      if (!target) return prev;
-      return {
-        items: prev.items.filter((item) => item.id !== id),
-        trash: [target, ...prev.trash],
-      };
-    });
+  const toggleFavorite = useCallback(async (id: string) => {
+    const result = await toggleVaultItemFavorite(id);
+    if (result.ok) {
+      upsertItem(result.item);
+    } else {
+      toast.add({ title: "Update failed", description: result.message, type: "error" });
+    }
+  }, [upsertItem]);
+
+  const moveToTrash = useCallback(async (id: string) => {
+    const result = await trashVaultItem(id);
+    if (!result.ok) {
+      toast.add({ title: "Could not move to trash", description: result.message, type: "error" });
+      return;
+    }
+    setVault((prev) => ({
+      items: prev.items.filter((item) => item.id !== id),
+      trash: [result.item, ...prev.trash],
+    }));
     toast.add({
       title: "Moved to trash",
       description: "You can restore the item from the Trash section.",
@@ -72,21 +98,25 @@ export function useDashboard() {
     });
   }, []);
 
-  const restoreItem = useCallback((id: string) => {
-    setVault((prev) => {
-      const target = prev.trash.find((item) => item.id === id);
-      if (!target) return prev;
-      return {
-        items: [...prev.items, target].sort((a, b) =>
-          a.name.localeCompare(b.name),
-        ),
-        trash: prev.trash.filter((item) => item.id !== id),
-      };
-    });
+  const restoreItem = useCallback(async (id: string) => {
+    const result = await restoreVaultItem(id);
+    if (!result.ok) {
+      toast.add({ title: "Could not restore", description: result.message, type: "error" });
+      return;
+    }
+    setVault((prev) => ({
+      items: [...prev.items, result.item].sort(byName),
+      trash: prev.trash.filter((item) => item.id !== id),
+    }));
     toast.add({ title: "Item restored", type: "success" });
   }, []);
 
-  const deleteForever = useCallback((id: string) => {
+  const deleteForever = useCallback(async (id: string) => {
+    const result = await deleteVaultItemForever(id);
+    if (!result.ok) {
+      toast.add({ title: "Delete failed", description: result.message, type: "error" });
+      return;
+    }
     setVault((prev) => ({
       ...prev,
       trash: prev.trash.filter((item) => item.id !== id),
@@ -98,14 +128,11 @@ export function useDashboard() {
     });
   }, []);
 
-  // Every destructive delete funnels through the confirmation dialog —
-  // the actual state move only happens once the user confirms.
-  const requestDelete = useCallback(
-    (item: VaultItem, mode: DeleteMode) => {
-      setDeleteTarget({ item, mode });
-    },
-    [],
-  );
+  // Every destructive delete funnels through the confirmation dialog — the
+  // actual server call only happens once the user confirms.
+  const requestDelete = useCallback((item: VaultItem, mode: DeleteMode) => {
+    setDeleteTarget({ item, mode });
+  }, []);
 
   const closeDeleteDialog = useCallback((open: boolean) => {
     if (!open) setDeleteTarget(null);
@@ -113,24 +140,20 @@ export function useDashboard() {
 
   const confirmDelete = useCallback(() => {
     if (!deleteTarget) return;
-    if (deleteTarget.mode === "trash") {
-      moveToTrash(deleteTarget.item.id);
-    } else {
-      deleteForever(deleteTarget.item.id);
-    }
+    const { item, mode } = deleteTarget;
     setDeleteTarget(null);
+    if (mode === "trash") void moveToTrash(item.id);
+    else void deleteForever(item.id);
   }, [deleteTarget, moveToTrash, deleteForever]);
 
-  const removeTag = useCallback((id: string, tag: string) => {
-    setVault((prev) => ({
-      ...prev,
-      items: prev.items.map((item) =>
-        item.id === id
-          ? { ...item, tags: item.tags.filter((t) => t !== tag) }
-          : item,
-      ),
-    }));
-  }, []);
+  const removeTag = useCallback(async (id: string, tag: string) => {
+    const result = await removeVaultItemTag(id, tag);
+    if (result.ok) {
+      upsertItem(result.item);
+    } else {
+      toast.add({ title: "Could not remove tag", description: result.message, type: "error" });
+    }
+  }, [upsertItem]);
 
   const openViewItem = useCallback((id: string) => setViewItemId(id), []);
 
@@ -187,73 +210,42 @@ export function useDashboard() {
     setAddItemState((prev) => ({ ...prev, open }));
   }, []);
 
-  const selectAddItemType = useCallback(
-    (type: VaultFormType) => {
-      setAddItemState((prev) => ({ ...prev, type }));
-    },
-    [],
-  );
+  const selectAddItemType = useCallback((type: VaultFormType) => {
+    setAddItemState((prev) => ({ ...prev, type }));
+  }, []);
 
-  const saveItem = useCallback((draft: ItemDraft) => {
-    const nowLabel = formatVaultDate(new Date());
-    const item: VaultItem = {
-      id: `item-${Date.now()}`,
-      name: draft.name,
-      username: draft.username,
-      website: draft.website,
-      category: draft.category ?? "Personal",
-      tags: draft.tags,
-      type: draft.type,
-      favorite: false,
-      updatedAt: 0,
-      updatedLabel: "Just now",
-      iconKey: "generic",
-      password: draft.password || undefined,
-      notes: draft.notes || undefined,
-      createdAt: nowLabel,
-      updatedAtLabel: nowLabel,
-    };
+  const saveItem = useCallback(async (draft: ItemDraft) => {
+    const result = await createVaultItem(draft);
+    if (!result.ok) {
+      toast.add({ title: "Could not save item", description: result.message, type: "error" });
+      return;
+    }
     setVault((prev) => ({
       ...prev,
-      items: [...prev.items, item].sort((a, b) => a.name.localeCompare(b.name)),
+      items: [...prev.items, result.item].sort(byName),
     }));
     setAddItemState((prev) => ({ ...prev, open: false }));
     toast.add({
       title: "Item saved",
-      description: `${draft.name} was added to your vault.`,
+      description: `${result.item.name} was added to your vault.`,
       type: "success",
     });
   }, []);
 
-  const saveEdit = useCallback((id: string, draft: ItemEditDraft) => {
-    const nowLabel = formatVaultDate(new Date());
-    // One pure update — merge the edit and re-sort together so a rename
-    // keeps the alphabetical list coherent (rerender-functional-setstate).
+  const saveEdit = useCallback(async (id: string, draft: ItemEditDraft) => {
+    const result = await updateVaultItem(id, draft);
+    if (!result.ok) {
+      toast.add({ title: "Could not save changes", description: result.message, type: "error" });
+      return;
+    }
     setVault((prev) => ({
       ...prev,
-      items: prev.items
-        .map((item) =>
-          item.id === id
-            ? {
-                ...item,
-                name: draft.name,
-                username: draft.username,
-                website: draft.website,
-                category: draft.category,
-                tags: draft.tags,
-                type: draft.type,
-                password: draft.password || undefined,
-                notes: draft.notes || undefined,
-                updatedAtLabel: nowLabel,
-              }
-            : item,
-        )
-        .sort((a, b) => a.name.localeCompare(b.name)),
+      items: prev.items.map((item) => (item.id === id ? result.item : item)).sort(byName),
     }));
     setEditItemId(null);
     toast.add({
       title: "Changes saved",
-      description: `${draft.name} was updated.`,
+      description: `${result.item.name} was updated.`,
       type: "success",
     });
   }, []);

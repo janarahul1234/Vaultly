@@ -6,6 +6,7 @@ import { useEffect, useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { toast } from "@/components/ui/toast";
+import { resendConfirmation } from "@/lib/supabase/auth-actions";
 import type { UserEmailProps } from "@/types/user";
 
 // Cooldown window (seconds) before another confirmation link can be requested.
@@ -29,10 +30,19 @@ export function ResendEmailButton({ email }: UserEmailProps) {
   const handleResend = () => {
     if (isPending || cooling) return;
 
-    // Demo request — replace with a server action / API call.
     startTransition(async () => {
-      await new Promise((resolve) => setTimeout(resolve, 1200));
+      const result = await resendConfirmation(email);
       setCooldown(RESEND_COOLDOWN_SECONDS);
+
+      if (!result.ok) {
+        toast.add({
+          type: "error",
+          title: "Could not resend email",
+          description: result.message,
+        });
+        return;
+      }
+
       toast.add({
         type: "success",
         title: "Confirmation email resent",

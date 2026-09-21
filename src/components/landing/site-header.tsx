@@ -13,8 +13,14 @@ import { MenuIcon } from "lucide-react";
 import Link from "next/link";
 
 import { navLinks } from "@/data/landing";
+import { createClient } from "@/lib/supabase/server";
 
-export function SiteHeader() {
+export async function SiteHeader() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
   return (
     <header className="sticky top-0 z-40 border-b bg-background/80 backdrop-blur">
       <div className="mx-auto flex h-14 w-full max-w-6xl items-center gap-6 px-4 md:px-6">
@@ -36,21 +42,33 @@ export function SiteHeader() {
 
         <div className="ml-auto flex items-center gap-2">
           <ModeToggle />
-          <Button
-            variant="outline"
-            nativeButton={false}
-            render={<Link href="/signin" />}
-            className="font-sans"
-          >
-            Sign in
-          </Button>
-          <Button
-            nativeButton={false}
-            render={<Link href="/signup" />}
-            className="font-sans"
-          >
-            Get started
-          </Button>
+          {user ? (
+            <Button
+              nativeButton={false}
+              render={<Link href="/dashboard" />}
+              className="font-sans"
+            >
+              Open dashboard
+            </Button>
+          ) : (
+            <>
+              <Button
+                variant="outline"
+                nativeButton={false}
+                render={<Link href="/signin" />}
+                className="font-sans"
+              >
+                Sign in
+              </Button>
+              <Button
+                nativeButton={false}
+                render={<Link href="/signup" />}
+                className="font-sans"
+              >
+                Get started
+              </Button>
+            </>
+          )}
           <DropdownMenu>
             <DropdownMenuTrigger
               render={
@@ -70,7 +88,9 @@ export function SiteHeader() {
               </DropdownMenuGroup>
               <DropdownMenuSeparator />
               <DropdownMenuItem>
-                <Link href="/signin">Sign in</Link>
+                <Link href={user ? "/dashboard" : "/signin"}>
+                  {user ? "Open dashboard" : "Sign in"}
+                </Link>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

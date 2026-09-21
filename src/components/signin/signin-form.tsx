@@ -1,7 +1,20 @@
 "use client";
 
+import { useState, useEffect, useTransition } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import {
+  ArrowRightIcon,
+  EyeIcon,
+  EyeOffIcon,
+  LockKeyholeIcon,
+  MailIcon,
+} from "lucide-react";
+import { useForm, useWatch } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+
 import { GitHubIcon, GoogleIcon } from "@/components/landing/brand-icons";
+
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -19,63 +32,82 @@ import {
 } from "@/components/ui/input-group";
 import { Spinner } from "@/components/ui/spinner";
 import { toast } from "@/components/ui/toast";
+
 import {
-  ArrowRightIcon,
-  EyeIcon,
-  EyeOffIcon,
-  LockKeyholeIcon,
-  MailIcon,
-} from "lucide-react";
-import { useState, useTransition } from "react";
-
-// Hoisted so the pattern is compiled once, not per render or per keystroke
-// (js-hoist-regexp).
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-function socialToast(provider: string) {
-  toast.add({
-    type: "info",
-    title: `${provider} sign-in is not available in this demo`,
-    description: "Use the email form to sign in to your account.",
-  });
-}
+  signInWithEmail,
+  signInWithProvider,
+} from "@/lib/supabase/auth-actions";
+import { SignInSchema, type SignInFormValues } from "@/lib/schemas/auth";
 
 export function SigninForm() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
-  const [keepSignedIn, setKeepSignedIn] = useState(true);
-  const [submitted, setSubmitted] = useState(false);
   const [isPending, startTransition] = useTransition();
 
-  const emailError =
-    submitted && !EMAIL_PATTERN.test(email)
-      ? "Please enter a valid email address."
-      : undefined;
-  const passwordError =
-    submitted && !password ? "Please enter your password." : undefined;
+  const {
+    register,
+    handleSubmit,
+    control,
+    setValue,
+    formState: { errors },
+  } = useForm<SignInFormValues>({
+    resolver: zodResolver(SignInSchema),
+    defaultValues: { email: "", password: "", keepSignedIn: true },
+  });
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    setSubmitted(true);
+  const keepSignedIn = useWatch({ control, name: "keepSignedIn" });
 
-    if (!EMAIL_PATTERN.test(email) || !password) {
-      toast.add({
-        type: "error",
-        title: "Please fix the highlighted fields",
-        description: "Your email and password are required to sign in.",
-      });
-      return;
-    }
+  // Surface an error handed back from the OAuth / email-confirmation callback
+  // (e.g. "Email not confirmed") as a toast on first mount.
+  useEffect(() => {
+    const message = new URLSearchParams(window.location.search).get("error");
+    if (!message) return;
+    toast.add({
+      type: "error",
+      title: "Unable to sign in",
+      description: message,
+    });
+  }, []);
 
-    // Demo submit — replace with a server action / API call.
+  const onValid = (values: SignInFormValues) => {
     startTransition(async () => {
-      await new Promise((resolve) => setTimeout(resolve, 1200));
+      const result = await signInWithEmail(values.email, values.password);
+      if (!result.ok) {
+        toast.add({
+          type: "error",
+          title: "Unable to sign in",
+          description: result.message,
+        });
+        return;
+      }
       toast.add({
         type: "success",
         title: "Signed in",
-        description: `Welcome back! Opening your vault for ${email}...`,
+        description: "Welcome back! Opening your vault...",
       });
+      router.push("/dashboard");
+      router.refresh();
+    });
+  };
+
+  const onInvalid = () => {
+    toast.add({
+      type: "error",
+      title: "Please fix the highlighted fields",
+      description: "Your email and password are required to sign in.",
+    });
+  };
+
+  const handleSocial = (provider: "google" | "github") => {
+    startTransition(async () => {
+      const result = await signInWithProvider(provider);
+      if (!result.ok) {
+        toast.add({
+          type: "error",
+          title: `Could not start ${provider} sign-in`,
+          description: result.message,
+        });
+      }
     });
   };
 
@@ -95,7 +127,8 @@ export function SigninForm() {
           type="button"
           variant="outline"
           className="h-11 w-full font-sans"
-          onClick={() => socialToast("Google")}
+          disabled={isPending}
+          onClick={() => handleSocial("google")}
         >
           <GoogleIcon data-icon="inline-start" />
           Continue with Google
@@ -104,18 +137,19 @@ export function SigninForm() {
           type="button"
           variant="outline"
           className="h-11 w-full font-sans"
-          onClick={() => socialToast("GitHub")}
+          disabled={isPending}
+          onClick={() => handleSocial("github")}
         >
           <GitHubIcon data-icon="inline-start" />
           Continue with GitHub
         </Button>
       </div>
 
-      <form onSubmit={handleSubmit} noValidate>
+      <form onSubmit={handleSubmit(onValid, onInvalid)} noValidate>
         <FieldGroup>
           <FieldSeparator>or</FieldSeparator>
 
-          <Field data-invalid={!!emailError}>
+          <Field data-invalid={!!errors.email}>
             <FieldLabel htmlFor="email">Email address</FieldLabel>
             <InputGroup>
               <InputGroupAddon>
@@ -123,19 +157,17 @@ export function SigninForm() {
               </InputGroupAddon>
               <InputGroupInput
                 id="email"
-                name="email"
                 type="email"
                 autoComplete="email"
                 placeholder="you@example.com"
-                aria-invalid={!!emailError}
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
+                aria-invalid={!!errors.email}
+                {...register("email")}
               />
             </InputGroup>
-            <FieldError>{emailError}</FieldError>
+            <FieldError errors={[errors.email]} />
           </Field>
 
-          <Field data-invalid={!!passwordError}>
+          <Field data-invalid={!!errors.password}>
             <FieldLabel htmlFor="password">Password</FieldLabel>
             <InputGroup>
               <InputGroupAddon>
@@ -143,13 +175,11 @@ export function SigninForm() {
               </InputGroupAddon>
               <InputGroupInput
                 id="password"
-                name="password"
                 type={showPassword ? "text" : "password"}
                 autoComplete="current-password"
                 placeholder="Enter your password"
-                aria-invalid={!!passwordError}
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
+                aria-invalid={!!errors.password}
+                {...register("password")}
               />
               <InputGroupAddon align="inline-end">
                 <InputGroupButton
@@ -161,15 +191,17 @@ export function SigninForm() {
                 </InputGroupButton>
               </InputGroupAddon>
             </InputGroup>
-            <FieldError>{passwordError}</FieldError>
+            <FieldError errors={[errors.password]} />
           </Field>
 
           <div className="flex items-center justify-between gap-4">
             <label className="flex items-center gap-2 text-sm">
               <Checkbox
-                name="remember"
+                name="keepSignedIn"
                 checked={keepSignedIn}
-                onCheckedChange={(checked) => setKeepSignedIn(!!checked)}
+                onCheckedChange={(checked) =>
+                  setValue("keepSignedIn", !!checked)
+                }
               />
               Keep me signed in
             </label>

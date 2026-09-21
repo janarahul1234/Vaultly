@@ -1,6 +1,8 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useForm, useWatch } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -41,13 +43,16 @@ import { cn } from "@/lib/utils";
 import { categoryOptions, strengthMeta } from "@/data/password";
 import { noteFormCopy } from "@/data/note";
 import { generatePassword, scorePassword } from "@/lib/vault-helpers";
+import {
+  VaultItemSchema,
+  type VaultItemFormOutput,
+  type VaultItemFormValues,
+} from "@/lib/schemas/vault-item";
 
 import type { AddItemSheetProps } from "@/types/dashboard";
 import {
   type CategoryFieldProps,
-  type ItemFormErrors,
   type TagsFieldProps,
-  type VaultCategory,
   type VaultFormType,
 } from "@/types/password";
 import {
@@ -151,6 +156,17 @@ function TagsField({ tags, onAddTag, onRemoveTag }: TagsFieldProps) {
   );
 }
 
+const FORM_DEFAULTS: VaultItemFormValues = {
+  type: "login",
+  name: "",
+  website: "",
+  username: "",
+  password: "",
+  category: "",
+  tags: [],
+  notes: "",
+};
+
 export function AddItemSheet({
   open,
   onOpenChange,
@@ -158,82 +174,79 @@ export function AddItemSheet({
   onItemTypeChange,
   onSave,
 }: AddItemSheetProps) {
-  const [name, setName] = useState("");
-  const [website, setWebsite] = useState("");
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [category, setCategory] = useState("");
-  const [tags, setTags] = useState<string[]>([]);
-  const [notes, setNotes] = useState("");
-  const [errors, setErrors] = useState<ItemFormErrors>({});
 
+  const {
+    register,
+    handleSubmit,
+    control,
+    getValues,
+    setValue,
+    reset,
+    formState: { errors },
+  } = useForm<VaultItemFormValues, unknown, VaultItemFormOutput>({
+    resolver: zodResolver(VaultItemSchema),
+    defaultValues: { ...FORM_DEFAULTS, type: itemType },
+  });
+
+  const password = useWatch({ control, name: "password" });
+  const category = useWatch({ control, name: "category" });
+  const tags = useWatch({ control, name: "tags" });
   const strength = useMemo(() => scorePassword(password), [password]);
 
-  // Errors are cleared as the user types so stale messages never shadow
-  // the strength bar or filled fields after a failed submit.
-  const clearError = useCallback((key: keyof typeof errors) => {
-    setErrors((prev) => (prev[key] ? { ...prev, [key]: undefined } : prev));
-  }, []);
+  // The tab lives in the parent, so keep the in-form discriminator in sync
+  // — the schema's conditional rules (login/password, note/content) key off it.
+  useEffect(() => {
+    setValue("type", itemType);
+  }, [itemType, setValue]);
 
-  const resetForm = useCallback(() => {
-    setName("");
-    setWebsite("");
-    setUsername("");
-    setPassword("");
-    setShowPassword(false);
-    setCategory("");
-    setTags([]);
-    setNotes("");
-    setErrors({});
-  }, []);
+  const addTag = useCallback(
+    (tag: string) => {
+      const current = getValues("tags");
+      if (!current.includes(tag)) setValue("tags", [...current, tag]);
+    },
+    [getValues, setValue],
+  );
 
-  const addTag = useCallback((tag: string) => {
-    setTags((prev) => (prev.includes(tag) ? prev : [...prev, tag]));
-  }, []);
-
-  const removeTag = useCallback((tag: string) => {
-    setTags((prev) => prev.filter((x) => x !== tag));
-  }, []);
+  const removeTag = useCallback(
+    (tag: string) => {
+      setValue("tags", getValues("tags").filter((x) => x !== tag));
+    },
+    [getValues, setValue],
+  );
 
   const handleOpenChange = useCallback(
     (next: boolean) => {
-      if (!next) resetForm();
+      if (!next) {
+        reset({ ...FORM_DEFAULTS, type: itemType });
+        setShowPassword(false);
+      }
       onOpenChange(next);
     },
-    [onOpenChange, resetForm],
+    [onOpenChange, reset, itemType],
   );
 
-  const handleSubmit = (event: React.FormEvent) => {
-    event.preventDefault();
-    const nextErrors: typeof errors = {};
-    if (!name.trim()) nextErrors.name = "Title is required.";
-    if (itemType === "login" && !password) {
-      nextErrors.password = "Password is required.";
-    }
-    if (itemType === "note" && !notes.trim()) {
-      nextErrors.notes = "Note content is required.";
-    }
-    if (Object.keys(nextErrors).length > 0) {
-      setErrors(nextErrors);
-      return;
-    }
-    setErrors({});
-    onSave({
-      type: itemType,
-      name: name.trim(),
-      website: website.trim(),
-      username: username.trim(),
-      password,
-      category: (category || null) as VaultCategory | null,
-      tags,
-      notes: notes.trim(),
-    });
-    resetForm();
-  };
+  const onSubmit = useCallback(
+    (data: VaultItemFormOutput) => {
+      // Trim/""-to-null transforms already ran through the zod resolver.
+      onSave({
+        type: data.type,
+        name: data.name,
+        website: data.website,
+        username: data.username,
+        password: data.password,
+        category: data.category,
+        tags: data.tags,
+        notes: data.notes,
+      });
+      reset({ ...FORM_DEFAULTS, type: data.type });
+      setShowPassword(false);
+    },
+    [onSave, reset],
+  );
 
   const openWebsite = () => {
-    const url = website.trim();
+    const url = getValues("website").trim();
     if (!url) return;
     window.open(/^https?:\/\//.test(url) ? url : `https://${url}`, "_blank");
   };
@@ -261,7 +274,7 @@ export function AddItemSheet({
         <form
           className="flex min-h-0 flex-1 flex-col"
           noValidate
-          onSubmit={handleSubmit}
+          onSubmit={handleSubmit(onSubmit)}
         >
           <Tabs
             value={itemType}
@@ -300,13 +313,9 @@ export function AddItemSheet({
                     id="item-name"
                     placeholder="e.g., GitHub, Gmail, Netflix"
                     aria-invalid={!!errors.name}
-                    value={name}
-                    onChange={(event) => {
-                      setName(event.target.value);
-                      clearError("name");
-                    }}
+                    {...register("name")}
                   />
-                  {errors.name && <FieldError>{errors.name}</FieldError>}
+                  <FieldError errors={[errors.name]} />
                 </Field>
 
                 <Field>
@@ -319,8 +328,7 @@ export function AddItemSheet({
                       id="item-website"
                       type="url"
                       placeholder="https://example.com"
-                      value={website}
-                      onChange={(event) => setWebsite(event.target.value)}
+                      {...register("website")}
                     />
                     <InputGroupAddon align="inline-end">
                       <InputGroupButton
@@ -342,8 +350,7 @@ export function AddItemSheet({
                   <Input
                     id="item-username"
                     placeholder="e.g., rahul@example.com"
-                    value={username}
-                    onChange={(event) => setUsername(event.target.value)}
+                    {...register("username")}
                   />
                 </Field>
 
@@ -357,11 +364,7 @@ export function AddItemSheet({
                       type={showPassword ? "text" : "password"}
                       placeholder="Enter or generate a password"
                       aria-invalid={!!errors.password}
-                      value={password}
-                      onChange={(event) => {
-                        setPassword(event.target.value);
-                        clearError("password");
-                      }}
+                      {...register("password")}
                     />
                     <InputGroupAddon align="inline-end">
                       <InputGroupButton
@@ -377,9 +380,10 @@ export function AddItemSheet({
                         size="icon-xs"
                         aria-label="Generate password"
                         onClick={() => {
-                          setPassword(generatePassword());
+                          setValue("password", generatePassword(), {
+                            shouldValidate: true,
+                          });
                           setShowPassword(false);
-                          clearError("password");
                         }}
                       >
                         <RefreshCwIcon />
@@ -387,7 +391,7 @@ export function AddItemSheet({
                     </InputGroupAddon>
                   </InputGroup>
                   {errors.password ? (
-                    <FieldError>{errors.password}</FieldError>
+                    <FieldError>{errors.password.message}</FieldError>
                   ) : (
                     strength && (
                       <div className="flex items-center gap-2">
@@ -406,7 +410,16 @@ export function AddItemSheet({
                   )}
                 </Field>
 
-                <CategoryField value={category} onValueChange={setCategory} />
+                <CategoryField
+                  value={category}
+                  onValueChange={(value) =>
+                    setValue(
+                      "category",
+                      value as VaultItemFormValues["category"],
+                      { shouldValidate: true },
+                    )
+                  }
+                />
                 <TagsField
                   tags={tags}
                   onAddTag={addTag}
@@ -421,8 +434,7 @@ export function AddItemSheet({
                   <Textarea
                     id="item-notes"
                     placeholder={noteFormCopy.notesPlaceholder}
-                    value={notes}
-                    onChange={(event) => setNotes(event.target.value)}
+                    {...register("notes")}
                   />
                 </Field>
               </FieldGroup>
@@ -438,16 +450,21 @@ export function AddItemSheet({
                     id="item-note-title"
                     placeholder={noteFormCopy.titlePlaceholder}
                     aria-invalid={!!errors.name}
-                    value={name}
-                    onChange={(event) => {
-                      setName(event.target.value);
-                      clearError("name");
-                    }}
+                    {...register("name")}
                   />
-                  {errors.name && <FieldError>{errors.name}</FieldError>}
+                  <FieldError errors={[errors.name]} />
                 </Field>
 
-                <CategoryField value={category} onValueChange={setCategory} />
+                <CategoryField
+                  value={category}
+                  onValueChange={(value) =>
+                    setValue(
+                      "category",
+                      value as VaultItemFormValues["category"],
+                      { shouldValidate: true },
+                    )
+                  }
+                />
                 <TagsField
                   tags={tags}
                   onAddTag={addTag}
@@ -463,13 +480,9 @@ export function AddItemSheet({
                     placeholder={noteFormCopy.notePlaceholder}
                     aria-invalid={!!errors.notes}
                     className="min-h-40"
-                    value={notes}
-                    onChange={(event) => {
-                      setNotes(event.target.value);
-                      clearError("notes");
-                    }}
+                    {...register("notes")}
                   />
-                  {errors.notes && <FieldError>{errors.notes}</FieldError>}
+                  <FieldError errors={[errors.notes]} />
                 </Field>
               </FieldGroup>
             </TabsContent>

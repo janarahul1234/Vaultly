@@ -1,6 +1,8 @@
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
+import { useForm, useWatch } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import {
   CopyIcon,
   ExternalLinkIcon,
@@ -19,6 +21,11 @@ import { cn } from "@/lib/utils";
 import { categoryOptions, strengthMeta } from "@/data/password";
 import { noteFormCopy } from "@/data/note";
 import { copyToClipboard, scorePassword } from "@/lib/vault-helpers";
+import {
+  VaultItemSchema,
+  type VaultItemFormOutput,
+  type VaultItemFormValues,
+} from "@/lib/schemas/vault-item";
 
 import { ItemIcon } from "@/components/dashboard/item-icon";
 import { Badge } from "@/components/ui/badge";
@@ -64,9 +71,7 @@ import type {
 import {
   type CategoryFieldProps,
   type ItemEditDraft,
-  type ItemFormErrors,
   type TagsFieldProps,
-  type VaultCategory,
   type VaultFormType,
 } from "@/types/password";
 
@@ -166,79 +171,89 @@ function TagsField({ tags, onAddTag, onRemoveTag }: TagsFieldProps) {
   );
 }
 
-// Keyed per item by the parent — the useState lazy inits below therefore
-// reset whenever a different item is opened for editing.
+// Keyed per item by the parent — the useForm defaults below therefore
+// re-seed whenever a different item is opened for editing.
 function EditItemDetail({ item, onSave, onDelete }: EditItemDetailProps) {
-  const initialType: VaultFormType =
-    item.type === "note" ? "note" : "login";
-
-  const [tab, setTab] = useState<VaultFormType>(initialType);
-  const [name, setName] = useState(item.name);
-  const [website, setWebsite] = useState(item.website);
-  const [username, setUsername] = useState(item.username);
-  const [password, setPassword] = useState(item.password ?? "");
   const [showPassword, setShowPassword] = useState(false);
-  const [category, setCategory] = useState<string>(item.category);
-  const [tags, setTags] = useState<string[]>(item.tags);
-  const [notes, setNotes] = useState(item.notes ?? "");
-  const [errors, setErrors] = useState<ItemFormErrors>({});
 
+  const {
+    register,
+    handleSubmit,
+    control,
+    getValues,
+    setValue,
+    formState: { errors },
+  } = useForm<VaultItemFormValues, unknown, VaultItemFormOutput>({
+    resolver: zodResolver(VaultItemSchema),
+    defaultValues: {
+      type: item.type === "note" ? "note" : "login",
+      name: item.name,
+      website: item.website,
+      username: item.username,
+      password: item.password ?? "",
+      category: item.category,
+      tags: item.tags,
+      notes: item.notes ?? "",
+    },
+  });
+
+  // The active tab IS the in-form type discriminator — the schema's
+  // conditional rules (login/password, note/content) key off it.
+  const tab = useWatch({ control, name: "type" });
+  const password = useWatch({ control, name: "password" });
+  const category = useWatch({ control, name: "category" });
+  const tags = useWatch({ control, name: "tags" });
   const strength = useMemo(() => scorePassword(password), [password]);
 
-  const clearError = useCallback((key: keyof typeof errors) => {
-    setErrors((prev) => (prev[key] ? { ...prev, [key]: undefined } : prev));
-  }, []);
+  const addTag = useCallback(
+    (tag: string) => {
+      const current = getValues("tags");
+      if (!current.includes(tag)) setValue("tags", [...current, tag]);
+    },
+    [getValues, setValue],
+  );
 
-  const addTag = useCallback((tag: string) => {
-    setTags((prev) => (prev.includes(tag) ? prev : [...prev, tag]));
-  }, []);
-
-  const removeTag = useCallback((tag: string) => {
-    setTags((prev) => prev.filter((x) => x !== tag));
-  }, []);
+  const removeTag = useCallback(
+    (tag: string) => {
+      setValue("tags", getValues("tags").filter((x) => x !== tag));
+    },
+    [getValues, setValue],
+  );
 
   const openWebsite = useCallback(() => {
-    const url = website.trim();
+    const url = getValues("website").trim();
     if (!url) return;
     window.open(/^https?:\/\//.test(url) ? url : `https://${url}`, "_blank");
-  }, [website]);
+  }, [getValues]);
 
-  const handleSubmit = (event: React.FormEvent) => {
-    event.preventDefault();
-    const nextErrors: typeof errors = {};
-    if (!name.trim()) nextErrors.name = "Title is required.";
-    if (tab === "login" && !password) {
-      nextErrors.password = "Password is required.";
-    }
-    if (tab === "note" && !notes.trim()) {
-      nextErrors.notes = "Note content is required.";
-    }
-    if (Object.keys(nextErrors).length > 0) {
-      setErrors(nextErrors);
-      return;
-    }
-    onSave({
-      type: tab,
-      name: name.trim(),
-      website: website.trim(),
-      username: username.trim(),
-      password,
-      category: (category || item.category) as VaultCategory,
-      tags,
-      notes: notes.trim(),
-    });
-  };
+  const onSubmit = useCallback(
+    (data: VaultItemFormOutput) => {
+      // Trim transforms already ran through the zod resolver; a cleared
+      // category falls back to the stored one (ItemEditDraft is non-null).
+      onSave({
+        type: data.type,
+        name: data.name,
+        website: data.website,
+        username: data.username,
+        password: data.password,
+        category: data.category ?? item.category,
+        tags: data.tags,
+        notes: data.notes,
+      });
+    },
+    [onSave, item.category],
+  );
 
   return (
     <form
       className="flex min-h-0 flex-1 flex-col"
       noValidate
-      onSubmit={handleSubmit}
+      onSubmit={handleSubmit(onSubmit)}
     >
       <Tabs
         value={tab}
         onValueChange={(value) =>
-          setTab(value as VaultFormType)
+          setValue("type", value as VaultFormType, { shouldValidate: true })
         }
         className="min-h-0 flex-1 gap-0"
       >
@@ -272,13 +287,9 @@ function EditItemDetail({ item, onSave, onDelete }: EditItemDetailProps) {
                 id="edit-name"
                 placeholder="e.g., GitHub, Gmail, Netflix"
                 aria-invalid={!!errors.name}
-                value={name}
-                onChange={(event) => {
-                  setName(event.target.value);
-                  clearError("name");
-                }}
+                {...register("name")}
               />
-              {errors.name && <FieldError>{errors.name}</FieldError>}
+              <FieldError errors={[errors.name]} />
             </Field>
 
             <Field>
@@ -291,8 +302,7 @@ function EditItemDetail({ item, onSave, onDelete }: EditItemDetailProps) {
                   id="edit-website"
                   type="url"
                   placeholder="https://example.com"
-                  value={website}
-                  onChange={(event) => setWebsite(event.target.value)}
+                  {...register("website")}
                 />
                 <InputGroupAddon align="inline-end">
                   <InputGroupButton
@@ -315,14 +325,15 @@ function EditItemDetail({ item, onSave, onDelete }: EditItemDetailProps) {
                 <InputGroupInput
                   id="edit-username"
                   placeholder="e.g., rahul@example.com"
-                  value={username}
-                  onChange={(event) => setUsername(event.target.value)}
+                  {...register("username")}
                 />
                 <InputGroupAddon align="inline-end">
                   <InputGroupButton
                     size="icon-xs"
                     aria-label="Copy username"
-                    onClick={() => copyToClipboard("Username", username)}
+                    onClick={() =>
+                      copyToClipboard("Username", getValues("username"))
+                    }
                   >
                     <CopyIcon />
                   </InputGroupButton>
@@ -340,11 +351,7 @@ function EditItemDetail({ item, onSave, onDelete }: EditItemDetailProps) {
                   type={showPassword ? "text" : "password"}
                   placeholder="Enter a password"
                   aria-invalid={!!errors.password}
-                  value={password}
-                  onChange={(event) => {
-                    setPassword(event.target.value);
-                    clearError("password");
-                  }}
+                  {...register("password")}
                 />
                 <InputGroupAddon align="inline-end">
                   <InputGroupButton
@@ -366,7 +373,7 @@ function EditItemDetail({ item, onSave, onDelete }: EditItemDetailProps) {
                 </InputGroupAddon>
               </InputGroup>
               {errors.password ? (
-                <FieldError>{errors.password}</FieldError>
+                <FieldError>{errors.password.message}</FieldError>
               ) : (
                 strength && (
                   <div className="flex items-center gap-2">
@@ -385,7 +392,16 @@ function EditItemDetail({ item, onSave, onDelete }: EditItemDetailProps) {
               )}
             </Field>
 
-            <CategoryField value={category} onValueChange={setCategory} />
+            <CategoryField
+              value={category}
+              onValueChange={(value) =>
+                setValue(
+                  "category",
+                  value as VaultItemFormValues["category"],
+                  { shouldValidate: true },
+                )
+              }
+            />
             <TagsField tags={tags} onAddTag={addTag} onRemoveTag={removeTag} />
 
             <Field>
@@ -395,8 +411,7 @@ function EditItemDetail({ item, onSave, onDelete }: EditItemDetailProps) {
               <Textarea
                 id="edit-notes"
                 placeholder={noteFormCopy.notesPlaceholder}
-                value={notes}
-                onChange={(event) => setNotes(event.target.value)}
+                {...register("notes")}
               />
             </Field>
           </FieldGroup>
@@ -412,16 +427,21 @@ function EditItemDetail({ item, onSave, onDelete }: EditItemDetailProps) {
                 id="edit-note-title"
                 placeholder={noteFormCopy.titlePlaceholder}
                 aria-invalid={!!errors.name}
-                value={name}
-                onChange={(event) => {
-                  setName(event.target.value);
-                  clearError("name");
-                }}
+                {...register("name")}
               />
-              {errors.name && <FieldError>{errors.name}</FieldError>}
+              <FieldError errors={[errors.name]} />
             </Field>
 
-            <CategoryField value={category} onValueChange={setCategory} />
+            <CategoryField
+              value={category}
+              onValueChange={(value) =>
+                setValue(
+                  "category",
+                  value as VaultItemFormValues["category"],
+                  { shouldValidate: true },
+                )
+              }
+            />
             <TagsField tags={tags} onAddTag={addTag} onRemoveTag={removeTag} />
 
             <Field data-invalid={!!errors.notes}>
@@ -433,13 +453,9 @@ function EditItemDetail({ item, onSave, onDelete }: EditItemDetailProps) {
                 placeholder={noteFormCopy.notePlaceholder}
                 aria-invalid={!!errors.notes}
                 className="min-h-40"
-                value={notes}
-                onChange={(event) => {
-                  setNotes(event.target.value);
-                  clearError("notes");
-                }}
+                {...register("notes")}
               />
-              {errors.notes && <FieldError>{errors.notes}</FieldError>}
+              <FieldError errors={[errors.notes]} />
             </Field>
           </FieldGroup>
         </TabsContent>
@@ -506,7 +522,7 @@ export function EditItemSheet({
                 </SheetDescription>
               </div>
             </SheetHeader>
-            {/* Remounts per item so form fields reset to the newly edited record. */}
+            {/* Remounts per item so the form re-seeds from the newly edited record. */}
             <EditItemDetail
               key={item.id}
               item={item}

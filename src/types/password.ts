@@ -88,13 +88,6 @@ export type PasswordStrengthMeta = {
   progress: string;
 };
 
-/** Validation errors for the add/edit item forms. */
-export type ItemFormErrors = {
-  name?: string;
-  password?: string;
-  notes?: string;
-};
-
 /** Props of the category select shared by the add/edit sheets. */
 export type CategoryFieldProps = {
   value: string;

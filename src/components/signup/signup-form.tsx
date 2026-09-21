@@ -30,51 +30,42 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
+import { useForm, useWatch } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  signUpWithEmail,
+  signInWithProvider,
+} from "@/lib/supabase/auth-actions";
+import {
+  SignUpSchema,
+  passwordRequirements,
+  type SignUpFormValues,
+} from "@/lib/schemas/auth";
 
-// Hoisted so the patterns are compiled once, not per render or per keystroke
-// (js-hoist-regexp).
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-const passwordRequirements = [
-  {
-    id: "length",
-    label: "Use at least 8 characters",
-    test: (value: string) => value.length >= 8,
-  },
-  {
-    id: "upper",
-    label: "Include an uppercase letter",
-    test: (value: string) => /[A-Z]/.test(value),
-  },
-  {
-    id: "number",
-    label: "Include a number",
-    test: (value: string) => /\d/.test(value),
-  },
-  {
-    id: "special",
-    label: "Include a special character",
-    test: (value: string) => /[^A-Za-z0-9]/.test(value),
-  },
-];
-
-function socialToast(provider: string) {
+function socialErrorToast(provider: string, message: string) {
   toast.add({
-    type: "info",
-    title: `${provider} sign-up is not available in this demo`,
-    description: "Use the email form to create your account.",
+    type: "error",
+    title: `Could not start ${provider} sign-up`,
+    description: message,
   });
 }
 
 export function SignupForm() {
   const router = useRouter();
-  const [fullName, setFullName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [agreed, setAgreed] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
   const [isPending, startTransition] = useTransition();
+
+  const {
+    register,
+    handleSubmit,
+    control,
+    formState: { errors },
+  } = useForm<SignUpFormValues>({
+    resolver: zodResolver(SignUpSchema),
+    defaultValues: { fullName: "", email: "", password: "" },
+  });
+
+  const password = useWatch({ control, name: "password" });
 
   // Derived during render, no effect needed (rerender-derived-state-no-effect).
   const metCount = passwordRequirements.reduce(
@@ -82,44 +73,56 @@ export function SignupForm() {
     0,
   );
 
-  const nameError =
-    submitted && !fullName.trim() ? "Please enter your full name." : undefined;
-  const emailError =
-    submitted && !EMAIL_PATTERN.test(email)
-      ? "Please enter a valid email address."
-      : undefined;
-  const passwordError =
-    submitted && !password ? "Please create a password." : undefined;
-  const agreedError =
-    submitted && !agreed ? "You must accept the terms to continue." : undefined;
-
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    setSubmitted(true);
-
-    if (
-      !fullName.trim() ||
-      !EMAIL_PATTERN.test(email) ||
-      !password ||
-      !agreed
-    ) {
-      toast.add({
-        type: "error",
-        title: "Please fix the highlighted fields",
-        description: "All fields are required to create your account.",
-      });
-      return;
-    }
-
-    // Demo submit — replace with a server action / API call.
+  const onValid = (values: SignUpFormValues) => {
     startTransition(async () => {
-      await new Promise((resolve) => setTimeout(resolve, 1200));
+      const result = await signUpWithEmail(
+        values.email,
+        values.password,
+        values.fullName,
+      );
+      if (!result.ok) {
+        toast.add({
+          type: "error",
+          title: "Could not create account",
+          description: result.message,
+        });
+        return;
+      }
+
+      if (result.needsVerification) {
+        toast.add({
+          type: "success",
+          title: "Account created",
+          description: "We sent you a confirmation link. Check your inbox.",
+        });
+        router.push(
+          `/verify-email?email=${encodeURIComponent(values.email)}`,
+        );
+        return;
+      }
+
       toast.add({
         type: "success",
         title: "Account created",
-        description: "We sent you a confirmation link. Check your inbox.",
+        description: "Welcome to Vaultly! Opening your vault...",
       });
-      router.push(`/verify-email?email=${encodeURIComponent(email)}`);
+      router.push("/dashboard");
+      router.refresh();
+    });
+  };
+
+  const onInvalid = () => {
+    toast.add({
+      type: "error",
+      title: "Please fix the highlighted fields",
+      description: "All fields are required to create your account.",
+    });
+  };
+
+  const handleSocial = (provider: "google" | "github") => {
+    startTransition(async () => {
+      const result = await signInWithProvider(provider);
+      if (!result.ok) socialErrorToast(provider, result.message);
     });
   };
 
@@ -139,7 +142,8 @@ export function SignupForm() {
           type="button"
           variant="outline"
           className="h-10 font-sans"
-          onClick={() => socialToast("Google")}
+          disabled={isPending}
+          onClick={() => handleSocial("google")}
         >
           <GoogleIcon data-icon="inline-start" />
           Continue with Google
@@ -148,18 +152,19 @@ export function SignupForm() {
           type="button"
           variant="outline"
           className="h-10 font-sans"
-          onClick={() => socialToast("GitHub")}
+          disabled={isPending}
+          onClick={() => handleSocial("github")}
         >
           <GitHubIcon data-icon="inline-start" />
           Continue with GitHub
         </Button>
       </div>
 
-      <form onSubmit={handleSubmit} noValidate>
+      <form onSubmit={handleSubmit(onValid, onInvalid)} noValidate>
         <FieldGroup>
           <FieldSeparator>or</FieldSeparator>
 
-          <Field data-invalid={!!nameError}>
+          <Field data-invalid={!!errors.fullName}>
             <FieldLabel htmlFor="full-name">Full name</FieldLabel>
             <InputGroup>
               <InputGroupAddon>
@@ -167,18 +172,16 @@ export function SignupForm() {
               </InputGroupAddon>
               <InputGroupInput
                 id="full-name"
-                name="name"
                 autoComplete="name"
                 placeholder="John Doe"
-                aria-invalid={!!nameError}
-                value={fullName}
-                onChange={(event) => setFullName(event.target.value)}
+                aria-invalid={!!errors.fullName}
+                {...register("fullName")}
               />
             </InputGroup>
-            <FieldError>{nameError}</FieldError>
+            <FieldError errors={[errors.fullName]} />
           </Field>
 
-          <Field data-invalid={!!emailError}>
+          <Field data-invalid={!!errors.email}>
             <FieldLabel htmlFor="email">Email address</FieldLabel>
             <InputGroup>
               <InputGroupAddon>
@@ -186,19 +189,17 @@ export function SignupForm() {
               </InputGroupAddon>
               <InputGroupInput
                 id="email"
-                name="email"
                 type="email"
                 autoComplete="email"
                 placeholder="you@example.com"
-                aria-invalid={!!emailError}
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
+                aria-invalid={!!errors.email}
+                {...register("email")}
               />
             </InputGroup>
-            <FieldError>{emailError}</FieldError>
+            <FieldError errors={[errors.email]} />
           </Field>
 
-          <Field data-invalid={!!passwordError}>
+          <Field data-invalid={!!errors.password}>
             <FieldLabel htmlFor="password">Password</FieldLabel>
             <InputGroup>
               <InputGroupAddon>
@@ -206,13 +207,11 @@ export function SignupForm() {
               </InputGroupAddon>
               <InputGroupInput
                 id="password"
-                name="password"
                 type={showPassword ? "text" : "password"}
                 autoComplete="new-password"
                 placeholder="Create a strong password"
-                aria-invalid={!!passwordError}
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
+                aria-invalid={!!errors.password}
+                {...register("password")}
               />
               <InputGroupAddon align="inline-end">
                 <InputGroupButton
@@ -224,7 +223,7 @@ export function SignupForm() {
                 </InputGroupButton>
               </InputGroupAddon>
             </InputGroup>
-            <FieldError>{passwordError}</FieldError>
+            <FieldError errors={[errors.password]} />
 
             {/* Strength segments */}
             <div

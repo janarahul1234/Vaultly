@@ -2,11 +2,16 @@
 
 import Link from "next/link";
 import { ChevronDownIcon, LogOutIcon } from "lucide-react";
+import { useEffect, useState } from "react";
+import type { User } from "@supabase/supabase-js";
 
 import { accountDetails, profileLinks, supportLinks } from "@/data/user";
+import { useSignOut } from "@/hooks/use-sign-out";
+import { createClient } from "@/lib/supabase/client";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -33,6 +38,26 @@ function MenuLink({ href, icon: Icon, label, description }: ProfileMenuLink) {
 }
 
 export function ProfileMenu() {
+  const [user, setUser] = useState<User | null>(null);
+  const { isPending, signOut } = useSignOut();
+
+  useEffect(() => {
+    const supabase = createClient();
+    let active = true;
+    supabase.auth.getUser().then(({ data }) => {
+      if (active) setUser(data.user);
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const email = user?.email ?? accountDetails.email;
+  const fullName =
+    (user?.user_metadata?.full_name as string | undefined) ??
+    email.split("@")[0];
+  const initial = (fullName || email).charAt(0).toUpperCase();
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
@@ -46,11 +71,11 @@ export function ProfileMenu() {
       >
         <Avatar>
           <AvatarFallback className="bg-primary/15 text-primary">
-            {accountDetails.name.charAt(0)}
+            {initial}
           </AvatarFallback>
         </Avatar>
         <span className="hidden font-sans font-medium sm:inline">
-          {accountDetails.name}
+          {fullName}
         </span>
         <ChevronDownIcon className="hidden size-4 text-muted-foreground sm:block" />
       </DropdownMenuTrigger>
@@ -59,15 +84,15 @@ export function ProfileMenu() {
         <div className="flex items-center gap-3 px-1.5 py-2">
           <Avatar size="lg">
             <AvatarFallback className="bg-primary/15 text-base text-primary">
-              {accountDetails.name.charAt(0)}
+              {initial}
             </AvatarFallback>
           </Avatar>
           <div className="flex min-w-0 flex-col">
             <span className="truncate font-heading font-semibold">
-              {accountDetails.name}
+              {fullName}
             </span>
             <span className="truncate text-sm text-muted-foreground">
-              {accountDetails.email}
+              {email}
             </span>
           </div>
         </div>
@@ -86,11 +111,11 @@ export function ProfileMenu() {
         <DropdownMenuSeparator />
         <DropdownMenuItem
           variant="destructive"
-          render={<Link href="/signin" />}
-          nativeButton={false}
+          disabled={isPending}
+          onClick={signOut}
           className="gap-4 px-3 py-2 font-sans font-medium"
         >
-          <LogOutIcon />
+          {isPending ? <Spinner /> : <LogOutIcon />}
           Sign Out
         </DropdownMenuItem>
       </DropdownMenuContent>

@@ -1,15 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import {
-  ChevronDownIcon,
-  HelpCircleIcon,
-  LogOutIcon,
-  MessageSquareTextIcon,
-  ShieldCheckIcon,
-  SlidersHorizontalIcon,
-  UserIcon,
-} from "lucide-react";
+import { ChevronDownIcon, LogOutIcon } from "lucide-react";
+
+import { accountDetails, profileLinks, supportLinks } from "@/data/user";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -22,48 +16,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-import type { ProfileMenuLink, UserAccount } from "@/types/user";
-
-const accountDetails: UserAccount = {
-  name: "Rahul Jana",
-  email: "rahul@example.com",
-};
-
-const profileLinks: ProfileMenuLink[] = [
-  {
-    href: "/dashboard",
-    icon: UserIcon,
-    label: "My Profile",
-    description: "Manage your account",
-  },
-  {
-    href: "/dashboard",
-    icon: ShieldCheckIcon,
-    label: "Security",
-    description: "Password, 2FA, and sessions",
-  },
-  {
-    href: "/dashboard",
-    icon: SlidersHorizontalIcon,
-    label: "Preferences",
-    description: "Appearance, language, and more",
-  },
-];
-
-const supportLinks: ProfileMenuLink[] = [
-  {
-    href: "/dashboard",
-    icon: HelpCircleIcon,
-    label: "Help & Support",
-    description: "Docs, FAQ, and contact",
-  },
-  {
-    href: "/dashboard",
-    icon: MessageSquareTextIcon,
-    label: "Give Feedback",
-    description: "Help us improve",
-  },
-];
+import type { ProfileMenuLink } from "@/types/user";
 
 function MenuLink({ href, icon: Icon, label, description }: ProfileMenuLink) {
   return (

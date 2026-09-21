@@ -1,90 +1,19 @@
 import {
-  FolderIcon,
-  FolderPlusIcon,
-  KeyRoundIcon,
   LockKeyholeIcon,
-  NotebookPenIcon,
   SearchIcon,
   SettingsIcon,
-  StarIcon,
-  TagIcon,
-  Trash2Icon,
-  UploadIcon,
 } from "lucide-react";
+
+import {
+  mockupQuickActions as quickActions,
+  mockupRecentItems as recentItems,
+  mockupSidebarItems as sidebarItems,
+} from "@/data/landing";
+
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-
-const sidebarItems = [
-  { label: "All items", icon: FolderIcon, active: true, count: 5 },
-  { label: "Favorites", icon: StarIcon },
-  { label: "Categories", icon: TagIcon },
-  { label: "Tags", icon: TagIcon },
-  { label: "Trash", icon: Trash2Icon },
-];
-
-const quickActions = [
-  {
-    label: "Add Password",
-    icon: KeyRoundIcon,
-    tint: "bg-emerald-500/10 text-emerald-600",
-  },
-  {
-    label: "Add Note",
-    icon: NotebookPenIcon,
-    tint: "bg-amber-500/10 text-amber-600",
-  },
-  {
-    label: "Upload File",
-    icon: UploadIcon,
-    tint: "bg-sky-500/10 text-sky-600",
-  },
-  {
-    label: "Create Category",
-    icon: FolderPlusIcon,
-    tint: "bg-violet-500/10 text-violet-600",
-  },
-];
-
-const recentItems = [
-  {
-    name: "Gmail",
-    detail: "rahul@mail.com",
-    icon: LockKeyholeIcon,
-    tint: "bg-red-500/10 text-red-500",
-    badge: "Password",
-    badgeTint: "bg-emerald-500/10 text-emerald-600",
-    time: "2h ago",
-  },
-  {
-    name: "Project Notes",
-    detail: "ideas and planning",
-    icon: NotebookPenIcon,
-    tint: "bg-amber-500/10 text-amber-600",
-    badge: "Note",
-    badgeTint: "bg-amber-500/10 text-amber-600",
-    time: "5h ago",
-  },
-  {
-    name: "Design Files",
-    detail: "3 items",
-    icon: FolderIcon,
-    tint: "bg-violet-500/10 text-violet-600",
-    badge: "File",
-    badgeTint: "bg-sky-500/10 text-sky-600",
-    time: "1d ago",
-  },
-  {
-    name: "Bank Account",
-    detail: "****1234",
-    icon: LockKeyholeIcon,
-    tint: "bg-emerald-500/10 text-emerald-600",
-    badge: "Password",
-    badgeTint: "bg-emerald-500/10 text-emerald-600",
-    time: "2d ago",
-  },
-];
 
 export function AppMockup() {
   return (

@@ -34,7 +34,6 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { toast } from "@/components/ui/toast";
 
 import type {
   ReadOnlyTextFieldProps,
@@ -45,26 +44,8 @@ import type {
 } from "@/types/dashboard";
 import type { NoteFieldProps } from "@/types/note";
 
-// Fallback for demo items without a stored secret — keeps the password row
-// functional without inventing per-row data.
-const fallbackPassword = "V4ultly!Demo#2024";
-
-async function copyToClipboard(label: string, value: string) {
-  try {
-    await navigator.clipboard.writeText(value);
-    toast.add({
-      title: `${label} copied`,
-      description: value,
-      type: "success",
-    });
-  } catch {
-    toast.add({
-      title: "Copy failed",
-      description: "Clipboard is not available.",
-      type: "error",
-    });
-  }
-}
+import { fallbackPassword } from "@/data/password";
+import { copyToClipboard } from "@/lib/vault-helpers";
 
 function ReadOnlyTitleField({ id, label, value }: ReadOnlyTextFieldProps) {
   return (

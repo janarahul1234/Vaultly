@@ -1,54 +1,8 @@
-import {
-  FileTextIcon,
-  FolderIcon,
-  MonitorSmartphoneIcon,
-  StarIcon,
-  TagIcon,
-  LockIcon,
-} from "lucide-react";
+import { features } from "@/data/landing";
+
 import { Card, CardContent } from "@/components/ui/card";
 import { SectionBadge } from "@/components/landing/section-badge";
 import { cn } from "@/lib/utils";
-
-const features = [
-  {
-    title: "Secure Passwords",
-    description:
-      "Store and auto-fill your passwords safely with end-to-end encryption.",
-    icon: LockIcon,
-    tint: "bg-primary/10 text-primary",
-  },
-  {
-    title: "Rich Notes",
-    description: "Keep your ideas, notes, and important information organized.",
-    icon: FileTextIcon,
-    tint: "bg-primary/10 text-primary",
-  },
-  {
-    title: "File Storage",
-    description: "Upload and store files, documents, and images securely.",
-    icon: FolderIcon,
-    tint: "bg-primary/10 text-primary",
-  },
-  {
-    title: "Categories & Tags",
-    description: "Organize everything your way with categories and tags.",
-    icon: TagIcon,
-    tint: "bg-primary/10 text-primary",
-  },
-  {
-    title: "Favorites",
-    description: "Quickly access your most important items.",
-    icon: StarIcon,
-    tint: "bg-primary/10 text-primary",
-  },
-  {
-    title: "Multi-Device Sync",
-    description: "Access your vault on all your devices, anytime, anywhere.",
-    icon: MonitorSmartphoneIcon,
-    tint: "bg-primary/10 text-primary",
-  },
-];
 
 export function Features() {
   return (

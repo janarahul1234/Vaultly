@@ -1,18 +1,4 @@
-import {
-  GitHubIcon,
-  NotionIcon,
-  ProductHuntIcon,
-  SupabaseIcon,
-  VercelIcon,
-} from "@/components/landing/brand-icons";
-
-const brands = [
-  { name: "Product Hunt", icon: ProductHuntIcon },
-  { name: "GitHub", icon: GitHubIcon },
-  { name: "Vercel", icon: VercelIcon },
-  { name: "Supabase", icon: SupabaseIcon },
-  { name: "Notion", icon: NotionIcon },
-];
+import { trustedBrands as brands } from "@/data/landing";
 
 export function TrustedLogos() {
   return (

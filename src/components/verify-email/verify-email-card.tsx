@@ -1,11 +1,7 @@
 import Link from "next/link";
-import {
-  ArrowLeftIcon,
-  CircleHelpIcon,
-  MailIcon,
-  MessageCircleIcon,
-  ShieldCheckIcon,
-} from "lucide-react";
+import { ArrowLeftIcon, MailIcon } from "lucide-react";
+
+import { verifyEmailHelpItems as helpItems } from "@/data/user";
 
 import type { UserEmailProps } from "@/types/user";
 
@@ -27,25 +23,6 @@ import {
 } from "@/components/ui/card";
 import { FieldSeparator } from "@/components/ui/field";
 import { ResendEmailButton } from "./resend-email-button";
-
-// Hoisted static content so the footer rows are plain data mapped at render.
-const helpItems = [
-  {
-    icon: CircleHelpIcon,
-    title: "Need help?",
-    description: "Visit our help center",
-  },
-  {
-    icon: MessageCircleIcon,
-    title: "Contact support",
-    description: "We're here to help",
-  },
-  {
-    icon: ShieldCheckIcon,
-    title: "Secure & private",
-    description: "Your data is always safe",
-  },
-];
 
 export function VerifyEmailCard({ email }: UserEmailProps) {
   return (

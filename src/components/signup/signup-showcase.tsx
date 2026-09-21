@@ -1,50 +1,12 @@
-import {
-  CheckIcon,
-  FileTextIcon,
-  FolderIcon,
-  HeartIcon,
-  KeyRoundIcon,
-  LockKeyholeIcon,
-  ShieldLock,
-} from "lucide-react";
+import { CheckIcon, LockKeyholeIcon, ShieldLock } from "lucide-react";
+
+import { signupFloatingTiles, signupPerks } from "@/data/user";
+
 import { cn } from "@/lib/utils";
 import type { SignupShowcaseProps } from "@/types/user";
 
-// Decorative perks and floating tiles are static data hoisted to module
-// level (rendering-hoist-jsx) — this panel ships zero client JS.
-
-const perks = [
-  "End-to-end encryption",
-  "Access anywhere",
-  "Open source & free",
-];
-
-const floatingTiles = [
-  {
-    label: "Passwords",
-    icon: KeyRoundIcon,
-    tint: "bg-primary/10 text-primary",
-    position: "left-0 top-6 sm:left-12",
-  },
-  {
-    label: "Notes",
-    icon: FileTextIcon,
-    tint: "bg-primary/15 text-primary",
-    position: "right-0 top-2 sm:right-10",
-  },
-  {
-    label: "Files",
-    icon: FolderIcon,
-    tint: "bg-primary/10 text-primary",
-    position: "left-0 bottom-8 sm:left-6",
-  },
-  {
-    label: "Favorites",
-    icon: HeartIcon,
-    tint: "bg-primary/10 text-primary",
-    position: "right-0 bottom-3 sm:right-14",
-  },
-];
+// Decorative perks and floating tiles are static data hoisted to
+// @/data/user (rendering-hoist-jsx) — this panel ships zero client JS.
 
 export function SignupShowcase({
   headline = "Start securing your digital life",
@@ -103,7 +65,7 @@ export function SignupShowcase({
         </div>
 
         {/* Floating category tiles */}
-        {floatingTiles.map((tile) => (
+        {signupFloatingTiles.map((tile) => (
           <div
             key={tile.label}
             className={cn(
@@ -126,7 +88,7 @@ export function SignupShowcase({
 
       {/* Perks */}
       <ul className="grid sm:grid-cols-3">
-        {perks.map((perk) => (
+        {signupPerks.map((perk) => (
           <li key={perk} className="flex items-center gap-2 text-sm">
             <span className="flex size-4.5 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
               <CheckIcon className="size-3" />

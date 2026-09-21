@@ -1,18 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import {
-  ArrowLeftRightIcon,
-  FolderIcon,
-  KeyRoundIcon,
-  SettingsIcon,
-  StarIcon,
-  TagIcon,
-  Trash2Icon,
-  WandSparklesIcon,
-} from "lucide-react";
 
-import type { DashboardSidebarProps, NavItem } from "@/types/dashboard";
+import { primaryNav, secondaryNav } from "@/data/dashboard";
 import { cn } from "@/lib/utils";
 
 import { VaultLogo } from "@/components/landing/brand-icons";
@@ -26,19 +16,7 @@ import {
 } from "@/components/ui/sidebar";
 import { toast } from "@/components/ui/toast";
 
-const primaryNav: NavItem[] = [
-  { key: "all", label: "All Items", icon: KeyRoundIcon },
-  { key: "favorites", label: "Favorites", icon: StarIcon },
-  { key: "categories", label: "Categories", icon: FolderIcon },
-  { key: "tags", label: "Tags", icon: TagIcon },
-  { key: "trash", label: "Trash", icon: Trash2Icon },
-];
-
-const secondaryNav = [
-  { label: "Generator", icon: WandSparklesIcon },
-  { label: "Import / Export", icon: ArrowLeftRightIcon },
-  { label: "Settings", icon: SettingsIcon },
-];
+import type { DashboardSidebarProps } from "@/types/dashboard";
 
 export function DashboardSidebar({
   activeNav,

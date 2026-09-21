@@ -12,7 +12,8 @@ import { ViewItemSheet } from "@/components/dashboard/view-item-sheet";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { toast } from "@/components/ui/toast";
 
-import { formatVaultDate, vaultItems } from "@/components/dashboard/data";
+import { formatVaultDate } from "@/lib/vault-helpers";
+import { vaultItems } from "@/data/password";
 import type {
   AddItemState,
   DeleteMode,

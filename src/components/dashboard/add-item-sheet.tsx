@@ -38,12 +38,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 
+import { categoryOptions, strengthMeta } from "@/data/password";
+import { noteFormCopy } from "@/data/note";
+import { generatePassword, scorePassword } from "@/lib/vault-helpers";
+
 import type { AddItemSheetProps } from "@/types/dashboard";
 import {
   type CategoryFieldProps,
   type ItemFormErrors,
-  type PasswordStrength,
-  type PasswordStrengthMeta,
   type TagsFieldProps,
   type VaultCategory,
   type VaultFormType,
@@ -60,75 +62,6 @@ import {
   StickyNoteIcon,
   XIcon,
 } from "lucide-react";
-
-const categoryOptions: VaultCategory[] = [
-  "Work",
-  "Personal",
-  "Entertainment",
-  "Shopping",
-  "Social",
-];
-
-// Data-driven strength colors — Progress/Badge variants can't express per
-// level hues, so the map lives at module level (same pattern as categoryStyles).
-const strengthMeta: Record<PasswordStrength, PasswordStrengthMeta> = {
-  weak: {
-    label: "Weak",
-    pct: 33,
-    progress:
-      "text-destructive [&_[data-slot=progress-indicator]]:bg-destructive",
-  },
-  fair: {
-    label: "Fair",
-    pct: 66,
-    progress:
-      "text-amber-600 dark:text-amber-400 [&_[data-slot=progress-indicator]]:bg-amber-500",
-  },
-  strong: { label: "Strong", pct: 100, progress: "text-primary" },
-};
-
-function scorePassword(password: string): PasswordStrength | null {
-  if (!password) return null;
-  let score = 0;
-  if (password.length >= 8) score += 1;
-  if (password.length >= 14) score += 1;
-  if (/[a-z]/.test(password) && /[A-Z]/.test(password)) score += 1;
-  if (/\d/.test(password)) score += 1;
-  if (/[^A-Za-z0-9]/.test(password)) score += 1;
-  if (score <= 2) return "weak";
-  if (score <= 4) return "fair";
-  return "strong";
-}
-
-// Hoisted so the generator is never re-created per render (js-hoist-regexp).
-const passwordSets = [
-  "abcdefghijkmnopqrstuvwxyz",
-  "ABCDEFGHJKLMNPQRSTUVWXYZ",
-  "23456789",
-  "!@#$%^&*()-_=+[]{}",
-] as const;
-
-function generatePassword(length = 20) {
-  const all = passwordSets.join("");
-  const pick = (chars: string) => {
-    const buf = new Uint32Array(1);
-    crypto.getRandomValues(buf);
-    return chars[buf[0] % chars.length];
-  };
-  const chars = passwordSets.map(pick);
-  while (chars.length < length) chars.push(pick(all));
-  for (let i = chars.length - 1; i > 0; i -= 1) {
-    const j = bufShuffle(i + 1);
-    [chars[i], chars[j]] = [chars[j], chars[i]];
-  }
-  return chars.join("");
-}
-
-function bufShuffle(max: number) {
-  const buf = new Uint32Array(1);
-  crypto.getRandomValues(buf);
-  return buf[0] % max;
-}
 
 function CategoryField({ value, onValueChange }: CategoryFieldProps) {
   return (
@@ -487,7 +420,7 @@ export function AddItemSheet({
                   </FieldLabel>
                   <Textarea
                     id="item-notes"
-                    placeholder="Add any additional notes..."
+                    placeholder={noteFormCopy.notesPlaceholder}
                     value={notes}
                     onChange={(event) => setNotes(event.target.value)}
                   />
@@ -503,7 +436,7 @@ export function AddItemSheet({
                   </FieldLabel>
                   <Input
                     id="item-note-title"
-                    placeholder="e.g., Wi-Fi keys, Recovery codes"
+                    placeholder={noteFormCopy.titlePlaceholder}
                     aria-invalid={!!errors.name}
                     value={name}
                     onChange={(event) => {
@@ -527,7 +460,7 @@ export function AddItemSheet({
                   </FieldLabel>
                   <Textarea
                     id="item-note-body"
-                    placeholder="Write your secure note..."
+                    placeholder={noteFormCopy.notePlaceholder}
                     aria-invalid={!!errors.notes}
                     className="min-h-40"
                     value={notes}

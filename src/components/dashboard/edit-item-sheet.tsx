@@ -16,6 +16,10 @@ import {
 
 import { cn } from "@/lib/utils";
 
+import { categoryOptions, strengthMeta } from "@/data/password";
+import { noteFormCopy } from "@/data/note";
+import { copyToClipboard, scorePassword } from "@/lib/vault-helpers";
+
 import { ItemIcon } from "@/components/dashboard/item-icon";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -52,7 +56,6 @@ import {
 } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
-import { toast } from "@/components/ui/toast";
 
 import type {
   EditItemDetailProps,
@@ -62,72 +65,10 @@ import {
   type CategoryFieldProps,
   type ItemEditDraft,
   type ItemFormErrors,
-  type PasswordStrength,
-  type PasswordStrengthMeta,
   type TagsFieldProps,
   type VaultCategory,
   type VaultFormType,
 } from "@/types/password";
-
-const categoryOptions: VaultCategory[] = [
-  "Work",
-  "Personal",
-  "Entertainment",
-  "Shopping",
-  "Social",
-];
-
-// Data-driven strength colors — same map shape as the add sheet, hoisted so
-// it is never re-created per render.
-const strengthMeta: Record<PasswordStrength, PasswordStrengthMeta> = {
-  weak: {
-    label: "Weak",
-    pct: 33,
-    progress:
-      "text-destructive [&_[data-slot=progress-indicator]]:bg-destructive",
-  },
-  fair: {
-    label: "Fair",
-    pct: 66,
-    progress:
-      "text-amber-600 dark:text-amber-400 [&_[data-slot=progress-indicator]]:bg-amber-500",
-  },
-  strong: { label: "Strong", pct: 100, progress: "text-primary" },
-};
-
-function scorePassword(password: string): PasswordStrength | null {
-  if (!password) return null;
-  let score = 0;
-  if (password.length >= 8) score += 1;
-  if (password.length >= 14) score += 1;
-  if (/[a-z]/.test(password) && /[A-Z]/.test(password)) score += 1;
-  if (/\d/.test(password)) score += 1;
-  if (/[^A-Za-z0-9]/.test(password)) score += 1;
-  if (score <= 2) return "weak";
-  if (score <= 4) return "fair";
-  return "strong";
-}
-
-async function copyToClipboard(label: string, value: string) {
-  if (!value) {
-    toast.add({
-      title: "Nothing to copy",
-      description: `This ${label.toLowerCase()} is empty.`,
-      type: "error",
-    });
-    return;
-  }
-  try {
-    await navigator.clipboard.writeText(value);
-    toast.add({ title: `${label} copied`, type: "success" });
-  } catch {
-    toast.add({
-      title: "Copy failed",
-      description: "Clipboard is not available.",
-      type: "error",
-    });
-  }
-}
 
 function CategoryField({ value, onValueChange }: CategoryFieldProps) {
   return (
@@ -453,7 +394,7 @@ function EditItemDetail({ item, onSave, onDelete }: EditItemDetailProps) {
               </FieldLabel>
               <Textarea
                 id="edit-notes"
-                placeholder="Add any additional notes..."
+                placeholder={noteFormCopy.notesPlaceholder}
                 value={notes}
                 onChange={(event) => setNotes(event.target.value)}
               />
@@ -469,7 +410,7 @@ function EditItemDetail({ item, onSave, onDelete }: EditItemDetailProps) {
               </FieldLabel>
               <Input
                 id="edit-note-title"
-                placeholder="e.g., Wi-Fi keys, Recovery codes"
+                placeholder={noteFormCopy.titlePlaceholder}
                 aria-invalid={!!errors.name}
                 value={name}
                 onChange={(event) => {
@@ -489,7 +430,7 @@ function EditItemDetail({ item, onSave, onDelete }: EditItemDetailProps) {
               </FieldLabel>
               <Textarea
                 id="edit-note-body"
-                placeholder="Write your secure note..."
+                placeholder={noteFormCopy.notePlaceholder}
                 aria-invalid={!!errors.notes}
                 className="min-h-40"
                 value={notes}

@@ -1,20 +1,14 @@
-// Static mock data for the Vaultly dashboard. Kept at module level so it is
-// never re-created per render (rerender-memo-with-default-value /
-// server-hoist-static-io). Type definitions live in @/types.
+// Password / vault-item mock data — the stored items, their display metadata,
+// and the option maps shared by the add/edit sheets. Kept at module level so
+// nothing is re-created per render (rerender-memo-with-default-value /
+// server-hoist-static-io). Type definitions live in @/types/password.
 
-import type { NavHeading, NavKey } from "@/types/dashboard";
-import type { VaultCategory, VaultItem } from "@/types/password";
-
-// "Jan 10, 2024, 3:24 PM" — the absolute format used by the details panel.
-export function formatVaultDate(date: Date) {
-  return date.toLocaleString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  });
-}
+import type {
+  PasswordStrength,
+  PasswordStrengthMeta,
+  VaultCategory,
+  VaultItem,
+} from "@/types/password";
 
 export const vaultItems: VaultItem[] = [
   {
@@ -164,28 +158,42 @@ export const categoryStyles: Record<VaultCategory, string> = {
   Social: "bg-pink-500/10 text-pink-600 dark:text-pink-400",
 };
 
-export const navHeadings: Record<NavKey, NavHeading> = {
-  all: {
-    title: "All Passwords",
-    subtitle: "Manage your secure information in one place.",
+// Category select options shared by the add/edit sheets.
+export const categoryOptions: VaultCategory[] = [
+  "Work",
+  "Personal",
+  "Entertainment",
+  "Shopping",
+  "Social",
+];
+
+// Data-driven strength colors — Progress/Badge variants can't express per
+// level hues, so the map lives here (same pattern as categoryStyles).
+export const strengthMeta: Record<PasswordStrength, PasswordStrengthMeta> = {
+  weak: {
+    label: "Weak",
+    pct: 33,
+    progress:
+      "text-destructive [&_[data-slot=progress-indicator]]:bg-destructive",
   },
-  favorites: {
-    title: "Favorites",
-    subtitle: "Items you starred for quick access.",
+  fair: {
+    label: "Fair",
+    pct: 66,
+    progress:
+      "text-amber-600 dark:text-amber-400 [&_[data-slot=progress-indicator]]:bg-amber-500",
   },
-  categories: {
-    title: "Categories",
-    subtitle: "Browse your vault grouped by category.",
-  },
-  tags: {
-    title: "Tags",
-    subtitle: "Browse your vault grouped by tags.",
-  },
-  trash: {
-    title: "Trash",
-    subtitle: "Items here can be restored or deleted forever.",
-  },
+  strong: { label: "Strong", pct: 100, progress: "text-primary" },
 };
 
-// Free plan capacity — 8 demo items / 10 = 80%, matching the design mock.
-export const vaultCapacity = 10;
+// Character sets for the password generator, hoisted so it is never
+// re-created per render (js-hoist-regexp lives in @/lib/vault-helpers).
+export const passwordSets = [
+  "abcdefghijkmnopqrstuvwxyz",
+  "ABCDEFGHJKLMNPQRSTUVWXYZ",
+  "23456789",
+  "!@#$%^&*()-_=+[]{}",
+] as const;
+
+// Fallback for demo items without a stored secret — keeps the password row
+// functional without inventing per-row data.
+export const fallbackPassword = "V4ultly!Demo#2024";

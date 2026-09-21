@@ -1,49 +1,16 @@
 import {
   ArrowRightIcon,
   CircleCheckIcon,
-  FileSearchIcon,
-  KeyRoundIcon,
   LockIcon,
   ShieldCheckIcon,
 } from "lucide-react";
+
+import { securityFloatingCards, securityPoints } from "@/data/landing";
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { SectionBadge } from "@/components/landing/section-badge";
 import { cn } from "@/lib/utils";
-
-const securityPoints = [
-  "End-to-end encryption",
-  "Zero-knowledge architecture",
-  "Open source & transparent",
-  "You own your data",
-];
-
-const floatingCards = [
-  {
-    label: ["Encrypted", "Data"],
-    icon: ShieldCheckIcon,
-    tint: "bg-primary/10 text-primary",
-    position: "left-0 top-6 sm:top-10",
-  },
-  {
-    label: ["You Control", "Your Keys"],
-    icon: KeyRoundIcon,
-    tint: "bg-primary/10 text-primary",
-    position: "right-0 top-20 sm:top-24",
-  },
-  {
-    label: ["Private &", "Secure"],
-    icon: LockIcon,
-    tint: "bg-primary/10 text-primary",
-    position: "left-4 bottom-24 sm:bottom-28",
-  },
-  {
-    label: ["Open Source", "& Auditable"],
-    icon: FileSearchIcon,
-    tint: "bg-primary/10 text-primary",
-    position: "right-2 bottom-8 sm:bottom-10",
-  },
-];
 
 export function Security() {
   return (
@@ -97,7 +64,7 @@ export function Security() {
             <LockIcon className="relative size-12 text-primary-foreground sm:size-14" />
           </div>
 
-          {floatingCards.map((card) => (
+          {securityFloatingCards.map((card) => (
             <Card
               key={card.label[0]}
               size="sm"

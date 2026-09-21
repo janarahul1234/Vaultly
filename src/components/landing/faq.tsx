@@ -1,4 +1,7 @@
 import { MessageCircleIcon } from "lucide-react";
+
+import { faqs } from "@/data/landing";
+
 import {
   Accordion,
   AccordionContent,
@@ -8,34 +11,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { SectionBadge } from "@/components/landing/section-badge";
-
-const faqs = [
-  {
-    question: "Is Vaultly really free?",
-    answer:
-      "Yes! Vaultly is completely free and open source. All core features — passwords, notes, files, and sync — are available at no cost, forever.",
-  },
-  {
-    question: "How secure is my data?",
-    answer:
-      "Your data is protected with end-to-end encryption using a zero-knowledge architecture. Only you hold your master key — we can never read your vault.",
-  },
-  {
-    question: "Can I access Vaultly on multiple devices?",
-    answer:
-      "Absolutely. Vaultly syncs securely across web, desktop, and mobile, so your vault is always up to date wherever you are.",
-  },
-  {
-    question: "Is Vaultly open source?",
-    answer:
-      "Yes, the entire codebase is open source and auditable by anyone. You can inspect, build, and even self-host Vaultly yourself.",
-  },
-  {
-    question: "What kind of files can I store?",
-    answer:
-      "You can store any file type — documents, images, videos, and more — encrypted and organized with categories and tags.",
-  },
-];
 
 export function Faq() {
   return (

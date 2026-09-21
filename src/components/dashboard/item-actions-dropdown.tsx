@@ -27,22 +27,7 @@ import { toast } from "@/components/ui/toast";
 
 import type { ItemActionsDropdownProps } from "@/types/dashboard";
 
-async function copyToClipboard(label: string, value: string) {
-  try {
-    await navigator.clipboard.writeText(value);
-    toast.add({
-      title: `${label} copied`,
-      description: value,
-      type: "success",
-    });
-  } catch {
-    toast.add({
-      title: "Copy failed",
-      description: "Clipboard is not available.",
-      type: "error",
-    });
-  }
-}
+import { copyToClipboard } from "@/lib/vault-helpers";
 
 function openWebsite(url: string) {
   if (!url) {

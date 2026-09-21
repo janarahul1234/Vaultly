@@ -1,30 +1,10 @@
 import { StarIcon } from "lucide-react";
+
+import { testimonials } from "@/data/landing";
+
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Card, CardFooter, CardHeader } from "@/components/ui/card";
 import { SectionBadge } from "@/components/landing/section-badge";
-
-const testimonials = [
-  {
-    quote:
-      "Vaultly has completely simplified how I manage my digital life. Clean, fast, and super secure!",
-    name: "Priya S.",
-    role: "Student",
-    initials: "PS",
-  },
-  {
-    quote:
-      "The open source approach gives me confidence. Finally a password manager I can trust.",
-    name: "Aman Verma",
-    role: "Developer",
-    initials: "AV",
-  },
-  {
-    quote: "Simple, beautiful, and does everything I need. Highly recommended!",
-    name: "Neha K.",
-    role: "Freelancer",
-    initials: "NK",
-  },
-];
 
 function StarRating() {
   return (

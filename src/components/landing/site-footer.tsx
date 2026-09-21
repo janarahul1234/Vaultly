@@ -1,27 +1,9 @@
 import Link from "next/link";
 import { HeartIcon } from "lucide-react";
-import {
-  DiscordIcon,
-  GitHubIcon,
-  VaultLogo,
-  XIcon,
-  YouTubeIcon,
-} from "@/components/landing/brand-icons";
 
-const footerLinks = [
-  { label: "Features", href: "#features" },
-  { label: "Security", href: "#security" },
-  { label: "Privacy", href: "#" },
-  { label: "Terms", href: "#" },
-  { label: "GitHub", href: "#" },
-];
+import { footerLinks, socialLinks } from "@/data/landing";
 
-const socialLinks = [
-  { label: "GitHub", icon: GitHubIcon, href: "#" },
-  { label: "X", icon: XIcon, href: "#" },
-  { label: "Discord", icon: DiscordIcon, href: "#" },
-  { label: "YouTube", icon: YouTubeIcon, href: "#" },
-];
+import { VaultLogo } from "@/components/landing/brand-icons";
 
 export function SiteFooter() {
   return (

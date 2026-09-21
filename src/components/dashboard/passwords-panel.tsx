@@ -55,7 +55,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-import { categoryStyles, navHeadings } from "@/components/dashboard/data";
+import { navHeadings, sortOptions, typeFilterMap, typeOptions } from "@/data/dashboard";
+import { categoryStyles } from "@/data/password";
 import type {
   FilterSelectProps,
   PasswordsPanelProps,
@@ -63,17 +64,7 @@ import type {
 import type {
   VaultCategory,
   VaultItem,
-  VaultTypeFilter,
 } from "@/types/password";
-
-const typeOptions = ["All types", "Login", "Note", "Card"] as const;
-const sortOptions = ["Name", "Recently Updated"] as const;
-const typeFilterMap: Record<(typeof typeOptions)[number], VaultTypeFilter> = {
-  "All types": "all",
-  Login: "login",
-  Note: "note",
-  Card: "card",
-};
 
 function FilterSelect({
   label,

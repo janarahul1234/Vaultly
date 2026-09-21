@@ -12,12 +12,7 @@ import {
 import { MenuIcon } from "lucide-react";
 import Link from "next/link";
 
-const navLinks = [
-  { label: "Features", href: "#features" },
-  { label: "Security", href: "#security" },
-  { label: "Pricing", href: "#get-started" },
-  { label: "FAQ", href: "#faq" },
-];
+import { navLinks } from "@/data/landing";
 
 export function SiteHeader() {
   return (

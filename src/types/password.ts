@@ -1,5 +1,5 @@
 // Vault data model + password-specific types shared across the dashboard.
-// Extracted from components/dashboard/data.ts and the add/edit sheets so the
+// Extracted from @/data/password and the add/edit sheets so the
 // model lives independently of the mock data and UI code.
 
 export type VaultCategory =

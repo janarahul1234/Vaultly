@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useEffect, useTransition } from "react";
-import Link from "next/link";
+import { useState, useEffect, useRef, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
   ArrowRightIcon,
@@ -32,6 +31,7 @@ import {
 } from "@/components/ui/input-group";
 import { Spinner } from "@/components/ui/spinner";
 import { toast } from "@/components/ui/toast";
+import { ForgotPasswordDialog } from "@/components/signin/forgot-password-dialog";
 
 import {
   signInWithEmail,
@@ -42,6 +42,7 @@ import { SignInSchema, type SignInFormValues } from "@/lib/schemas/auth";
 export function SigninForm() {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
+  const [resetOpen, setResetOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
 
   const {
@@ -49,6 +50,7 @@ export function SigninForm() {
     handleSubmit,
     control,
     setValue,
+    getValues,
     formState: { errors },
   } = useForm<SignInFormValues>({
     resolver: zodResolver(SignInSchema),
@@ -58,15 +60,33 @@ export function SigninForm() {
   const keepSignedIn = useWatch({ control, name: "keepSignedIn" });
 
   // Surface an error handed back from the OAuth / email-confirmation callback
-  // (e.g. "Email not confirmed") as a toast on first mount.
+  // (e.g. "Email not confirmed") as a toast on first mount. The ref guards
+  // against the StrictMode double-invoke, and the param is stripped from the
+  // URL so a later re-mount never replays the toast.
+  const errorCallbackShownRef = useRef(false);
   useEffect(() => {
-    const message = new URLSearchParams(window.location.search).get("error");
-    if (!message) return;
-    toast.add({
-      type: "error",
-      title: "Unable to sign in",
-      description: message,
-    });
+    const params = new URLSearchParams(window.location.search);
+    const message = params.get("error");
+    if (!message || errorCallbackShownRef.current) return;
+    errorCallbackShownRef.current = true;
+    params.delete("error");
+    const query = params.toString();
+    window.history.replaceState(
+      null,
+      "",
+      `${window.location.pathname}${query ? `?${query}` : ""}`,
+    );
+    // Deferred by one task: on a hard (redirect-driven) load this effect runs
+    // before the root <Toaster /> subscribes to the toast manager, so a
+    // synchronous add() would be dropped. The toast is global, so no cleanup
+    // is needed — the StrictMode remount is already blocked by the ref.
+    window.setTimeout(() => {
+      toast.add({
+        type: "error",
+        title: "Unable to sign in",
+        description: message,
+      });
+    }, 0);
   }, []);
 
   const onValid = (values: SignInFormValues) => {
@@ -206,10 +226,10 @@ export function SigninForm() {
               Keep me signed in
             </label>
             <Button
-              nativeButton={false}
-              render={<Link href="#" />}
+              type="button"
               variant="link"
               className="h-auto p-0 font-sans text-sm font-normal"
+              onClick={() => setResetOpen(true)}
             >
               Forgot password?
             </Button>
@@ -230,20 +250,26 @@ export function SigninForm() {
       <p className="sm:px-6 text-center text-sm leading-normal text-muted-foreground">
         By signing in, you agree to our{" "}
         <a
-          href="#"
+          href="/legal/terms"
           className="font-medium text-primary underline-offset-4 hover:underline"
         >
           Terms of Service
         </a>{" "}
         and{" "}
         <a
-          href="#"
+          href="/legal/privacy"
           className="font-medium text-primary underline-offset-4 hover:underline"
         >
           Privacy Policy
         </a>
         .
       </p>
+
+      <ForgotPasswordDialog
+        open={resetOpen}
+        onOpenChange={setResetOpen}
+        getCurrentEmail={() => getValues("email")}
+      />
     </div>
   );
 }

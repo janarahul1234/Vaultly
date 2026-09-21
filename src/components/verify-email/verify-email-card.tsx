@@ -33,8 +33,17 @@ export function VerifyEmailCard({ email }: UserEmailProps) {
           Check your email
         </CardTitle>
         <CardDescription className="flex flex-col items-center gap-1">
-          <span>We've sent a confirmation link to</span>
-          <span className="font-semibold text-foreground">{email}</span>
+          {email ? (
+            <>
+              <span>We&apos;ve sent a confirmation link to</span>
+              <span className="font-semibold text-foreground">{email}</span>
+            </>
+          ) : (
+            <span>
+              We&apos;ve sent a confirmation link to the email address you signed up
+              with.
+            </span>
+          )}
         </CardDescription>
       </CardHeader>
 
@@ -44,25 +53,27 @@ export function VerifyEmailCard({ email }: UserEmailProps) {
           address and activate your account.
         </p>
 
-        {/* Action overlays the alert only from sm up; on mobile it flows
-            below the text so nothing overlaps the Resend button. */}
-        <Alert className="grid-cols-[auto_1fr] items-center gap-x-4 rounded-xl bg-muted/50 p-4 max-sm:pr-4! sm:pr-40!">
-          <span
-            aria-hidden
-            className="row-span-2 flex size-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary"
-          >
-            <MailIcon className="translate-y-0" />
-          </span>
-          <AlertTitle className="font-semibold">
-            Didn't receive the email?
-          </AlertTitle>
-          <AlertDescription>
-            Check your spam folder or request a new link.
-          </AlertDescription>
-          <AlertAction className="relative inset-auto mt-2 translate-y-0 justify-self-start col-start-2 sm:absolute sm:top-1/2 sm:right-4 sm:mt-0 sm:-translate-y-1/2">
-            <ResendEmailButton email={email} />
-          </AlertAction>
-        </Alert>
+        {/* Resend only makes sense when an actual address is known; without it
+            the button would silently target a placeholder. */}
+        {email && (
+          <Alert className="grid-cols-[auto_1fr] items-center gap-x-4 rounded-xl bg-muted/50 p-4 max-sm:pr-4! sm:pr-40!">
+            <span
+              aria-hidden
+              className="row-span-2 flex size-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary"
+            >
+              <MailIcon className="translate-y-0" />
+            </span>
+            <AlertTitle className="font-semibold">
+              Didn&apos;t receive the email?
+            </AlertTitle>
+            <AlertDescription>
+              Check your spam folder or request a new link.
+            </AlertDescription>
+            <AlertAction className="relative inset-auto mt-2 translate-y-0 justify-self-start col-start-2 sm:absolute sm:top-1/2 sm:right-4 sm:mt-0 sm:-translate-y-1/2">
+              <ResendEmailButton email={email} />
+            </AlertAction>
+          </Alert>
+        )}
 
         <FieldSeparator>Or continue with</FieldSeparator>
 

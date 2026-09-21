@@ -56,3 +56,26 @@ export type SignInFormValues = z.input<typeof SignInSchema>;
 export type SignInFormOutput = z.output<typeof SignInSchema>;
 export type SignUpFormValues = z.input<typeof SignUpSchema>;
 export type SignUpFormOutput = z.output<typeof SignUpSchema>;
+
+// Password-reset forms: the email prompt on the sign-in dialog and the new
+// password form reached through the recovery link.
+export const ForgotPasswordSchema = z.object({
+  email: z.email({ error: "Please enter a valid email address." }).trim(),
+});
+
+export const ResetPasswordSchema = z
+  .object({
+    password: z
+      .string()
+      .min(1, { error: "Please create a new password." }),
+    confirmPassword: z
+      .string()
+      .min(1, { error: "Please confirm your new password." }),
+  })
+  .refine((values) => values.password === values.confirmPassword, {
+    path: ["confirmPassword"],
+    error: "Passwords do not match.",
+  });
+
+export type ForgotPasswordFormValues = z.input<typeof ForgotPasswordSchema>;
+export type ResetPasswordFormValues = z.input<typeof ResetPasswordSchema>;

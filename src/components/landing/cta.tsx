@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { ArrowRightIcon, FolderOpenIcon, LockKeyholeIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SectionBadge } from "@/components/landing/section-badge";
@@ -33,7 +34,7 @@ export function CallToAction() {
           size="lg"
           className="font-sans mt-2"
           nativeButton={false}
-          render={<a href="#" />}
+          render={<Link href="/signup" />}
         >
           Get started for free
           <ArrowRightIcon data-icon="inline-end" />

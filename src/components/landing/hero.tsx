@@ -3,7 +3,6 @@ import {
   CloudIcon,
   HeartIcon,
   LockIcon,
-  PlayIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AppMockup } from "@/components/landing/app-mockup";
@@ -67,16 +66,6 @@ export function Hero() {
             >
               Get started for free
               <ArrowRightIcon data-icon="inline-end" />
-            </Button>
-            <Button
-              size="lg"
-              variant="outline"
-              nativeButton={false}
-              render={<a href="#" />}
-              className="font-sans"
-            >
-              <PlayIcon data-icon="inline-start" />
-              Watch demo
             </Button>
           </div>
           <div className="flex flex-wrap items-center gap-8 pt-2">

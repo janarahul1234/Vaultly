@@ -24,14 +24,11 @@ import type { ComponentType, SVGProps } from "react";
 import type { LucideIcon } from "lucide-react";
 
 import {
-  DiscordIcon,
   GitHubIcon,
   NotionIcon,
   ProductHuntIcon,
   SupabaseIcon,
   VercelIcon,
-  XIcon,
-  YouTubeIcon,
 } from "@/components/landing/brand-icons";
 
 // Brand marks are plain SVG function components (see landing/brand-icons).
@@ -49,18 +46,9 @@ export const navLinks = [
 export const footerLinks = [
   { label: "Features", href: "#features" },
   { label: "Security", href: "#security" },
-  { label: "Privacy", href: "#" },
-  { label: "Terms", href: "#" },
-  { label: "GitHub", href: "#" },
+  { label: "Privacy", href: "/legal/privacy" },
+  { label: "Terms", href: "/legal/terms" },
 ];
-
-export const socialLinks: { label: string; icon: IconComponent; href: string }[] =
-  [
-    { label: "GitHub", icon: GitHubIcon, href: "#" },
-    { label: "X", icon: XIcon, href: "#" },
-    { label: "Discord", icon: DiscordIcon, href: "#" },
-    { label: "YouTube", icon: YouTubeIcon, href: "#" },
-  ];
 
 // ── Trusted logos ────────────────────────────────────────────────────────
 

@@ -16,10 +16,10 @@ export default async function VerifyEmailPage({
   searchParams: Promise<{ email?: string }>;
 }) {
   // The email is only serialized down to the client as a plain string
-  // (server-serialization).
+  // (server-serialization). Without a valid param there is no address to act
+  // on, so the card falls back to generic guidance instead of a fake address.
   const { email } = await searchParams;
-  const targetEmail =
-    email && EMAIL_PATTERN.test(email) ? email : "you@example.com";
+  const targetEmail = email && EMAIL_PATTERN.test(email) ? email : null;
 
   return (
     <main className="flex flex-1 items-center justify-center bg-muted/50 px-4 sm:px-6">

@@ -1,5 +1,3 @@
-import { MessageCircleIcon } from "lucide-react";
-
 import { faqs } from "@/data/landing";
 
 import {
@@ -8,8 +6,6 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { SectionBadge } from "@/components/landing/section-badge";
 
 export function Faq() {

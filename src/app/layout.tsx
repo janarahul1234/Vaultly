@@ -35,7 +35,7 @@ try{
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en">
+    <html lang="en" data-scroll-behavior="smooth">
       <body
         className={cn(
           "min-h-full flex flex-col font-mono antialiased",

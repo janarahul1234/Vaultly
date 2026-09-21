@@ -98,6 +98,50 @@ export async function resendConfirmation(email: string): Promise<AuthResult> {
   }
 }
 
+/**
+ * Send a password-reset link. The link lands on /auth/callback with
+ * type=recovery, which verifies the token and forwards the (recovery) session
+ * to /reset-password where the new password is set.
+ */
+export async function resetPassword(email: string): Promise<AuthResult> {
+  try {
+    const supabase = createClient();
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/auth/callback?next=/reset-password`,
+    });
+    if (error) return { ok: false, message: error.message };
+    return { ok: true };
+  } catch (error) {
+    return { ok: false, message: messageFrom(error) };
+  }
+}
+
+/** Set a new password for the signed-in (recovery) session. */
+export async function updatePassword(newPassword: string): Promise<AuthResult> {
+  try {
+    const supabase = createClient();
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    if (error) return { ok: false, message: error.message };
+    return { ok: true };
+  } catch (error) {
+    return { ok: false, message: messageFrom(error) };
+  }
+}
+
+/**
+ * Whether a session cookie exists (used to guard the reset-password page when
+ * it is opened outside the recovery flow).
+ */
+export async function hasSession(): Promise<boolean> {
+  try {
+    const supabase = createClient();
+    const { data } = await supabase.auth.getSession();
+    return Boolean(data.session);
+  } catch {
+    return false;
+  }
+}
+
 /** Sign the current user out so the caller can redirect to the sign-in page. */
 export async function signOut(): Promise<AuthResult> {
   try {

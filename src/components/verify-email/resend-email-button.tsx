@@ -7,12 +7,11 @@ import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { toast } from "@/components/ui/toast";
 import { resendConfirmation } from "@/lib/supabase/auth-actions";
-import type { UserEmailProps } from "@/types/user";
 
 // Cooldown window (seconds) before another confirmation link can be requested.
 const RESEND_COOLDOWN_SECONDS = 30;
 
-export function ResendEmailButton({ email }: UserEmailProps) {
+export function ResendEmailButton({ email }: { email: string }) {
   const [isPending, startTransition] = useTransition();
   const [cooldown, setCooldown] = useState(0);
   const cooling = cooldown > 0;

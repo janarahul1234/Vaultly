@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { HeartIcon } from "lucide-react";
 
-import { footerLinks, socialLinks } from "@/data/landing";
+import { footerLinks } from "@/data/landing";
 
 import { VaultLogo } from "@/components/landing/brand-icons";
 
@@ -22,18 +22,6 @@ export function SiteFooter() {
               </Link>
             ))}
           </nav>
-          <div className="ml-auto flex items-center gap-1 text-muted-foreground">
-            {socialLinks.map((social) => (
-              <Link
-                key={social.label}
-                href={social.href}
-                aria-label={social.label}
-                className="flex size-8 items-center justify-center rounded-lg transition-colors hover:bg-muted hover:text-primary"
-              >
-                <social.icon />
-              </Link>
-            ))}
-          </div>
         </div>
 
         <div className="flex flex-wrap items-center gap-2 border-t pt-6 text-xs text-muted-foreground">

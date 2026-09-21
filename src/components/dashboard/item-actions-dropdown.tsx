@@ -25,7 +25,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/toast";
 
-import type { VaultItem } from "@/components/dashboard/data";
+import type { ItemActionsDropdownProps } from "@/types/dashboard";
 
 async function copyToClipboard(label: string, value: string) {
   try {
@@ -55,14 +55,6 @@ function openWebsite(url: string) {
   }
   window.open(url, "_blank", "noopener,noreferrer");
 }
-
-type ItemActionsDropdownProps = {
-  item: VaultItem;
-  onView: (id: string) => void;
-  onEdit: (id: string) => void;
-  onToggleFavorite: (id: string) => void;
-  onTrash: (id: string) => void;
-};
 
 /**
  * Row-level actions menu for the passwords table. Memoized so typing in the

@@ -54,24 +54,20 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/components/ui/toast";
 
+import type {
+  EditItemDetailProps,
+  EditItemSheetProps,
+} from "@/types/dashboard";
 import {
+  type CategoryFieldProps,
+  type ItemEditDraft,
+  type ItemFormErrors,
+  type PasswordStrength,
+  type PasswordStrengthMeta,
+  type TagsFieldProps,
   type VaultCategory,
-  type VaultItem,
-  type VaultItemType,
-} from "@/components/dashboard/data";
-
-// Editable subset of a VaultItem — the Dashboard merges this back into the
-// stored record and owns timestamps/id, mirroring the ItemDraft contract.
-export type ItemEditDraft = {
-  type: Exclude<VaultItemType, "card">;
-  name: string;
-  website: string;
-  username: string;
-  password: string;
-  category: VaultCategory;
-  tags: string[];
-  notes: string;
-};
+  type VaultFormType,
+} from "@/types/password";
 
 const categoryOptions: VaultCategory[] = [
   "Work",
@@ -83,7 +79,7 @@ const categoryOptions: VaultCategory[] = [
 
 // Data-driven strength colors — same map shape as the add sheet, hoisted so
 // it is never re-created per render.
-const strengthMeta = {
+const strengthMeta: Record<PasswordStrength, PasswordStrengthMeta> = {
   weak: {
     label: "Weak",
     pct: 33,
@@ -97,11 +93,9 @@ const strengthMeta = {
       "text-amber-600 dark:text-amber-400 [&_[data-slot=progress-indicator]]:bg-amber-500",
   },
   strong: { label: "Strong", pct: 100, progress: "text-primary" },
-} as const;
+};
 
-type StrengthKey = keyof typeof strengthMeta;
-
-function scorePassword(password: string): StrengthKey | null {
+function scorePassword(password: string): PasswordStrength | null {
   if (!password) return null;
   let score = 0;
   if (password.length >= 8) score += 1;
@@ -135,13 +129,7 @@ async function copyToClipboard(label: string, value: string) {
   }
 }
 
-function CategoryField({
-  value,
-  onValueChange,
-}: {
-  value: string;
-  onValueChange: (value: string) => void;
-}) {
+function CategoryField({ value, onValueChange }: CategoryFieldProps) {
   return (
     <Field>
       <FieldLabel htmlFor="edit-category">
@@ -169,15 +157,7 @@ function CategoryField({
   );
 }
 
-function TagsField({
-  tags,
-  onAddTag,
-  onRemoveTag,
-}: {
-  tags: string[];
-  onAddTag: (tag: string) => void;
-  onRemoveTag: (tag: string) => void;
-}) {
+function TagsField({ tags, onAddTag, onRemoveTag }: TagsFieldProps) {
   const [adding, setAdding] = useState(false);
   const [draft, setDraft] = useState("");
 
@@ -247,19 +227,11 @@ function TagsField({
 
 // Keyed per item by the parent — the useState lazy inits below therefore
 // reset whenever a different item is opened for editing.
-function EditItemDetail({
-  item,
-  onSave,
-  onDelete,
-}: {
-  item: VaultItem;
-  onSave: (draft: ItemEditDraft) => void;
-  onDelete: (id: string) => void;
-}) {
-  const initialType: Exclude<VaultItemType, "card"> =
+function EditItemDetail({ item, onSave, onDelete }: EditItemDetailProps) {
+  const initialType: VaultFormType =
     item.type === "note" ? "note" : "login";
 
-  const [tab, setTab] = useState<Exclude<VaultItemType, "card">>(initialType);
+  const [tab, setTab] = useState<VaultFormType>(initialType);
   const [name, setName] = useState(item.name);
   const [website, setWebsite] = useState(item.website);
   const [username, setUsername] = useState(item.username);
@@ -268,11 +240,7 @@ function EditItemDetail({
   const [category, setCategory] = useState<string>(item.category);
   const [tags, setTags] = useState<string[]>(item.tags);
   const [notes, setNotes] = useState(item.notes ?? "");
-  const [errors, setErrors] = useState<{
-    name?: string;
-    password?: string;
-    notes?: string;
-  }>({});
+  const [errors, setErrors] = useState<ItemFormErrors>({});
 
   const strength = useMemo(() => scorePassword(password), [password]);
 
@@ -329,7 +297,7 @@ function EditItemDetail({
       <Tabs
         value={tab}
         onValueChange={(value) =>
-          setTab(value as Exclude<VaultItemType, "card">)
+          setTab(value as VaultFormType)
         }
         className="min-h-0 flex-1 gap-0"
       >
@@ -562,13 +530,7 @@ export function EditItemSheet({
   item,
   onSave,
   onDelete,
-}: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  item: VaultItem | null;
-  onSave: (id: string, draft: ItemEditDraft) => void;
-  onDelete: (id: string) => void;
-}) {
+}: EditItemSheetProps) {
   const handleSave = useCallback(
     (draft: ItemEditDraft) => {
       if (item) onSave(item.id, draft);

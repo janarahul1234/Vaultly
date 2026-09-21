@@ -8,6 +8,7 @@ import {
   ShieldLock,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import type { SignupShowcaseProps } from "@/types/user";
 
 // Decorative perks and floating tiles are static data hoisted to module
 // level (rendering-hoist-jsx) — this panel ships zero client JS.
@@ -47,9 +48,7 @@ const floatingTiles = [
 
 export function SignupShowcase({
   headline = "Start securing your digital life",
-}: {
-  headline?: string;
-}) {
+}: SignupShowcaseProps) {
   return (
     <aside className="relative hidden flex-col gap-10 overflow-hidden bg-linear-to-b from-primary/10 via-primary/5 to-background p-10 lg:flex xl:p-8">
       {/* Brand */}

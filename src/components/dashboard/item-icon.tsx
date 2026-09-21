@@ -14,7 +14,8 @@ import {
   XIcon,
 } from "@/components/landing/brand-icons";
 import { cn } from "@/lib/utils";
-import type { VaultIconKey } from "@/components/dashboard/data";
+import type { ItemIconProps } from "@/types/dashboard";
+import type { VaultIconKey } from "@/types/password";
 
 // Hoisted lookup — O(1) per item, no per-render allocation (js-index-maps).
 const iconMap: Record<VaultIconKey, React.FC<React.ComponentProps<"svg">>> = {
@@ -51,11 +52,7 @@ export function ItemIcon({
   iconKey = "generic",
   website,
   className,
-}: {
-  iconKey?: VaultIconKey;
-  website?: string;
-  className?: string;
-}) {
+}: ItemIconProps) {
   const Icon = iconMap[iconKey] ?? Earth;
   const hostname = hostnameFromWebsite(website);
   const [failedHostname, setFailedHostname] = useState<string | null>(null);

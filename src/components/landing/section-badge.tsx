@@ -1,13 +1,8 @@
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import type { SectionBadgeProps } from "@/types/landing";
 
-export function SectionBadge({
-  label,
-  className,
-}: {
-  label: string;
-  className?: string;
-}) {
+export function SectionBadge({ label, className }: SectionBadgeProps) {
   return (
     <Badge
       variant="outline"

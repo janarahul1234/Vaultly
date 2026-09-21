@@ -36,11 +36,18 @@ import {
 } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  type VaultCategory,
-  type VaultItemType,
-} from "@/components/dashboard/data";
 import { cn } from "@/lib/utils";
+
+import type { AddItemSheetProps } from "@/types/dashboard";
+import {
+  type CategoryFieldProps,
+  type ItemFormErrors,
+  type PasswordStrength,
+  type PasswordStrengthMeta,
+  type TagsFieldProps,
+  type VaultCategory,
+  type VaultFormType,
+} from "@/types/password";
 import {
   ExternalLinkIcon,
   EyeIcon,
@@ -54,18 +61,6 @@ import {
   XIcon,
 } from "lucide-react";
 
-// Shape emitted by the sheet — the Dashboard owns VaultItem construction.
-export type ItemDraft = {
-  type: Exclude<VaultItemType, "card">;
-  name: string;
-  website: string;
-  username: string;
-  password: string;
-  category: VaultCategory | null;
-  tags: string[];
-  notes: string;
-};
-
 const categoryOptions: VaultCategory[] = [
   "Work",
   "Personal",
@@ -76,7 +71,7 @@ const categoryOptions: VaultCategory[] = [
 
 // Data-driven strength colors — Progress/Badge variants can't express per
 // level hues, so the map lives at module level (same pattern as categoryStyles).
-const strengthMeta = {
+const strengthMeta: Record<PasswordStrength, PasswordStrengthMeta> = {
   weak: {
     label: "Weak",
     pct: 33,
@@ -90,11 +85,9 @@ const strengthMeta = {
       "text-amber-600 dark:text-amber-400 [&_[data-slot=progress-indicator]]:bg-amber-500",
   },
   strong: { label: "Strong", pct: 100, progress: "text-primary" },
-} as const;
+};
 
-type StrengthKey = keyof typeof strengthMeta;
-
-function scorePassword(password: string): StrengthKey | null {
+function scorePassword(password: string): PasswordStrength | null {
   if (!password) return null;
   let score = 0;
   if (password.length >= 8) score += 1;
@@ -137,13 +130,7 @@ function bufShuffle(max: number) {
   return buf[0] % max;
 }
 
-function CategoryField({
-  value,
-  onValueChange,
-}: {
-  value: string;
-  onValueChange: (value: string) => void;
-}) {
+function CategoryField({ value, onValueChange }: CategoryFieldProps) {
   return (
     <Field>
       <FieldLabel htmlFor="item-category">
@@ -171,15 +158,7 @@ function CategoryField({
   );
 }
 
-function TagsField({
-  tags,
-  onAddTag,
-  onRemoveTag,
-}: {
-  tags: string[];
-  onAddTag: (tag: string) => void;
-  onRemoveTag: (tag: string) => void;
-}) {
+function TagsField({ tags, onAddTag, onRemoveTag }: TagsFieldProps) {
   const [draft, setDraft] = useState("");
 
   const commit = useCallback(() => {
@@ -245,13 +224,7 @@ export function AddItemSheet({
   itemType,
   onItemTypeChange,
   onSave,
-}: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  itemType: Exclude<VaultItemType, "card">;
-  onItemTypeChange: (type: Exclude<VaultItemType, "card">) => void;
-  onSave: (draft: ItemDraft) => void;
-}) {
+}: AddItemSheetProps) {
   const [name, setName] = useState("");
   const [website, setWebsite] = useState("");
   const [username, setUsername] = useState("");
@@ -260,11 +233,7 @@ export function AddItemSheet({
   const [category, setCategory] = useState("");
   const [tags, setTags] = useState<string[]>([]);
   const [notes, setNotes] = useState("");
-  const [errors, setErrors] = useState<{
-    name?: string;
-    password?: string;
-    notes?: string;
-  }>({});
+  const [errors, setErrors] = useState<ItemFormErrors>({});
 
   const strength = useMemo(() => scorePassword(password), [password]);
 
@@ -364,7 +333,7 @@ export function AddItemSheet({
           <Tabs
             value={itemType}
             onValueChange={(value) =>
-              onItemTypeChange(value as Exclude<VaultItemType, "card">)
+              onItemTypeChange(value as VaultFormType)
             }
             className="min-h-0 flex-1 gap-0"
           >

@@ -1,9 +1,10 @@
 import { cn } from "@/lib/utils";
+import type { EmailSentIllustrationProps } from "@/types/user";
 
 // Decorative "email sent" artwork matching the reference design. Rendered as
 // static server JSX (rendering-hoist-jsx) and themed entirely with the
 // currentColor / card tokens so it adapts to dark mode automatically.
-export function EmailSentIllustration({ className }: { className?: string }) {
+export function EmailSentIllustration({ className }: EmailSentIllustrationProps) {
   return (
     <svg
       viewBox="0 0 440 320"

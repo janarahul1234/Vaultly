@@ -7,6 +7,8 @@ import {
   ShieldCheckIcon,
 } from "lucide-react";
 
+import type { UserEmailProps } from "@/types/user";
+
 import { EmailSentIllustration } from "@/components/verify-email/email-sent-illustration";
 import {
   Alert,
@@ -45,7 +47,7 @@ const helpItems = [
   },
 ];
 
-export function VerifyEmailCard({ email }: { email: string }) {
+export function VerifyEmailCard({ email }: UserEmailProps) {
   return (
     <Card className="w-full max-w-2xl [--card-spacing:--spacing(8)] rounded-3xl">
       <CardHeader className="text-center">

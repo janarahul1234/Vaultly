@@ -16,7 +16,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
-import type { VaultItem } from "@/components/dashboard/data";
+import type { DeleteItemDialogProps } from "@/types/dashboard";
 
 /**
  * Destructive confirmation for removing a vault item. Centered AlertDialog
@@ -32,17 +32,7 @@ export function DeleteItemDialog({
   title = "Delete this item?",
   actionLabel = "Delete",
   trigger,
-}: {
-  item: VaultItem | null;
-  open?: boolean;
-  onOpenChange?: (open: boolean) => void;
-  onConfirm: (id: string) => void;
-  /** Heading override — e.g. "Delete forever?" for the trash flow. */
-  title?: string;
-  actionLabel?: string;
-  /** Optional custom trigger element; omit when the parent controls `open`. */
-  trigger?: React.ReactElement;
-}) {
+}: DeleteItemDialogProps) {
   // Uncontrolled fallback when no `open` prop is supplied (trigger mode).
   const [internalOpen, setInternalOpen] = useState(false);
   const isOpen = open ?? internalOpen;

@@ -2,39 +2,30 @@
 
 import { useCallback, useMemo, useState } from "react";
 
-import {
-  AddItemSheet,
-  type ItemDraft,
-} from "@/components/dashboard/add-item-sheet";
+import { AddItemSheet } from "@/components/dashboard/add-item-sheet";
 import { DashboardHeader } from "@/components/dashboard/dashboard-header";
 import { DashboardSidebar } from "@/components/dashboard/dashboard-sidebar";
 import { DeleteItemDialog } from "@/components/dashboard/delete-item-dialog";
-import {
-  EditItemSheet,
-  type ItemEditDraft,
-} from "@/components/dashboard/edit-item-sheet";
+import { EditItemSheet } from "@/components/dashboard/edit-item-sheet";
 import { PasswordsPanel } from "@/components/dashboard/passwords-panel";
 import { ViewItemSheet } from "@/components/dashboard/view-item-sheet";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { toast } from "@/components/ui/toast";
 
-import {
-  formatVaultDate,
-  vaultItems,
-  type NavKey,
-  type VaultItem,
-  type VaultItemType,
-} from "@/components/dashboard/data";
-
-type AddItemState = {
-  open: boolean;
-  type: Exclude<VaultItemType, "card">;
-};
-
-type DeleteTarget = {
-  item: VaultItem;
-  mode: "trash" | "forever";
-} | null;
+import { formatVaultDate, vaultItems } from "@/components/dashboard/data";
+import type {
+  AddItemState,
+  DeleteMode,
+  DeleteTarget,
+  NavKey,
+} from "@/types/dashboard";
+import type {
+  ItemDraft,
+  ItemEditDraft,
+  VaultFormType,
+  VaultItem,
+  VaultItemType,
+} from "@/types/password";
 
 export function Dashboard() {
   // Single state object so trash moves stay one pure functional update —
@@ -118,7 +109,7 @@ export function Dashboard() {
   // Every destructive delete funnels through the confirmation dialog —
   // the actual state move only happens once the user confirms.
   const requestDelete = useCallback(
-    (item: VaultItem, mode: "trash" | "forever") => {
+    (item: VaultItem, mode: DeleteMode) => {
       setDeleteTarget({ item, mode });
     },
     [],
@@ -205,7 +196,7 @@ export function Dashboard() {
   }, []);
 
   const selectAddItemType = useCallback(
-    (type: Exclude<VaultItemType, "card">) => {
+    (type: VaultFormType) => {
       setAddItemState((prev) => ({ ...prev, type }));
     },
     [],

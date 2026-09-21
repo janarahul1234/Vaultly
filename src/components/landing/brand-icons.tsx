@@ -1,10 +1,9 @@
 import { ShieldLock } from "lucide-react";
 import { cn } from "@/lib/utils";
+import type { IconProps, VaultLogoProps } from "@/types/landing";
 
 // Brand marks are not part of lucide-react v1 anymore, so they live here as
 // static, hoisted SVG JSX (rendering-hoist-jsx / server-only, zero client JS).
-
-type IconProps = React.ComponentProps<"svg">;
 
 const BrandIconBase = {
   viewBox: "0 0 24 24",
@@ -165,7 +164,7 @@ export const YouTubeIcon = (props: IconProps) => (
   </svg>
 );
 
-export function VaultLogo({ className }: { className?: string }) {
+export function VaultLogo({ className }: VaultLogoProps) {
   return (
     <span
       className={cn(

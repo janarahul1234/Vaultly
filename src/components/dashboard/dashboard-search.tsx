@@ -18,15 +18,13 @@ import { ItemIcon } from "@/components/dashboard/item-icon";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/toast";
 
-import type { VaultItem } from "@/components/dashboard/data";
+import type { DashboardSearchProps } from "@/types/dashboard";
+import type { VaultItem } from "@/types/password";
 
 export function DashboardSearch({
   items,
   shortcut = "⌘ K",
-}: {
-  items: VaultItem[];
-  shortcut?: string;
-}) {
+}: DashboardSearchProps) {
   const [open, setOpen] = useState(false);
 
   // Single global keydown listener for the whole app (client-event-listeners).

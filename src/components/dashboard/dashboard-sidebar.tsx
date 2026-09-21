@@ -12,7 +12,7 @@ import {
   WandSparklesIcon,
 } from "lucide-react";
 
-import type { NavKey } from "@/components/dashboard/data";
+import type { DashboardSidebarProps, NavItem } from "@/types/dashboard";
 import { cn } from "@/lib/utils";
 
 import { VaultLogo } from "@/components/landing/brand-icons";
@@ -25,18 +25,6 @@ import {
   SidebarHeader,
 } from "@/components/ui/sidebar";
 import { toast } from "@/components/ui/toast";
-
-type NavItem = {
-  key: NavKey;
-  label: string;
-  icon: React.ComponentType<{ className?: string }>;
-};
-
-type DashboardSidebarProps = {
-  counts: Record<NavKey, number>;
-  activeNav: NavKey;
-  onNavChange: (nav: NavKey) => void;
-};
 
 const primaryNav: NavItem[] = [
   { key: "all", label: "All Items", icon: KeyRoundIcon },

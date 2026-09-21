@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import type { LucideIcon } from "lucide-react";
 import {
   ChevronDownIcon,
   HelpCircleIcon,
@@ -23,12 +22,14 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-const accountDetails = {
+import type { ProfileMenuLink, UserAccount } from "@/types/user";
+
+const accountDetails: UserAccount = {
   name: "Rahul Jana",
   email: "rahul@example.com",
 };
 
-const profileLinks = [
+const profileLinks: ProfileMenuLink[] = [
   {
     href: "/dashboard",
     icon: UserIcon,
@@ -49,7 +50,7 @@ const profileLinks = [
   },
 ];
 
-const supportLinks = [
+const supportLinks: ProfileMenuLink[] = [
   {
     href: "/dashboard",
     icon: HelpCircleIcon,
@@ -64,17 +65,7 @@ const supportLinks = [
   },
 ];
 
-function MenuLink({
-  href,
-  icon: Icon,
-  label,
-  description,
-}: {
-  href: string;
-  icon: LucideIcon;
-  label: string;
-  description: string;
-}) {
+function MenuLink({ href, icon: Icon, label, description }: ProfileMenuLink) {
   return (
     <DropdownMenuItem render={<Link href={href} />} nativeButton={false}>
       <div className="flex items-center gap-4 p-1 group">

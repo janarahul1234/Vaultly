@@ -9,13 +9,13 @@ import { Button } from "@/components/ui/button";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { toast } from "@/components/ui/toast";
 
-import type { VaultItem } from "@/components/dashboard/data";
+import type { DashboardHeaderProps } from "@/types/dashboard";
 
 const isMac =
   typeof navigator !== "undefined" &&
   /Mac|iPhone|iPad/.test(navigator.platform);
 
-export function DashboardHeader({ items }: { items: VaultItem[] }) {
+export function DashboardHeader({ items }: DashboardHeaderProps) {
   return (
     <header className="sticky top-0 z-30 border-b bg-background">
       <div className="flex h-16 items-center gap-2 px-4 md:gap-6 md:px-6">

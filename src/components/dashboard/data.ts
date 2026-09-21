@@ -1,51 +1,9 @@
 // Static mock data for the Vaultly dashboard. Kept at module level so it is
 // never re-created per render (rerender-memo-with-default-value /
-// server-hoist-static-io).
+// server-hoist-static-io). Type definitions live in @/types.
 
-export type VaultCategory =
-  | "Work"
-  | "Personal"
-  | "Entertainment"
-  | "Shopping"
-  | "Social";
-
-export type VaultItemType = "login" | "note" | "card";
-
-export type VaultIconKey =
-  | "github"
-  | "google"
-  | "notion"
-  | "spotify"
-  | "netflix"
-  | "amazon"
-  | "x"
-  | "linkedin"
-  /** Fallback for user-created items — renders the generic globe icon. */
-  | "generic";
-
-export type VaultItem = {
-  id: string;
-  name: string;
-  username: string;
-  website: string;
-  category: VaultCategory;
-  tags: string[];
-  type: VaultItemType;
-  favorite: boolean;
-  /** Days since last update — used for sorting. */
-  updatedAt: number;
-  /** Human-readable relative time — used for display. */
-  updatedLabel: string;
-  iconKey: VaultIconKey;
-  /** Stored secret — masked until revealed in the details panel. */
-  password?: string;
-  /** Free-form secure note shown in the details panel. */
-  notes?: string;
-  /** Absolute creation timestamp — shown in the details panel footer. */
-  createdAt?: string;
-  /** Absolute last-update timestamp — shown in the details panel footer. */
-  updatedAtLabel?: string;
-};
+import type { NavHeading, NavKey } from "@/types/dashboard";
+import type { VaultCategory, VaultItem } from "@/types/password";
 
 // "Jan 10, 2024, 3:24 PM" — the absolute format used by the details panel.
 export function formatVaultDate(date: Date) {
@@ -206,31 +164,28 @@ export const categoryStyles: Record<VaultCategory, string> = {
   Social: "bg-pink-500/10 text-pink-600 dark:text-pink-400",
 };
 
-export type NavKey = "all" | "favorites" | "categories" | "tags" | "trash";
-
-export const navHeadings: Record<NavKey, { title: string; subtitle: string }> =
-  {
-    all: {
-      title: "All Passwords",
-      subtitle: "Manage your secure information in one place.",
-    },
-    favorites: {
-      title: "Favorites",
-      subtitle: "Items you starred for quick access.",
-    },
-    categories: {
-      title: "Categories",
-      subtitle: "Browse your vault grouped by category.",
-    },
-    tags: {
-      title: "Tags",
-      subtitle: "Browse your vault grouped by tags.",
-    },
-    trash: {
-      title: "Trash",
-      subtitle: "Items here can be restored or deleted forever.",
-    },
-  };
+export const navHeadings: Record<NavKey, NavHeading> = {
+  all: {
+    title: "All Passwords",
+    subtitle: "Manage your secure information in one place.",
+  },
+  favorites: {
+    title: "Favorites",
+    subtitle: "Items you starred for quick access.",
+  },
+  categories: {
+    title: "Categories",
+    subtitle: "Browse your vault grouped by category.",
+  },
+  tags: {
+    title: "Tags",
+    subtitle: "Browse your vault grouped by tags.",
+  },
+  trash: {
+    title: "Trash",
+    subtitle: "Items here can be restored or deleted forever.",
+  },
+};
 
 // Free plan capacity — 8 demo items / 10 = 80%, matching the design mock.
 export const vaultCapacity = 10;

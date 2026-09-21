@@ -6,11 +6,12 @@ import { useEffect, useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { toast } from "@/components/ui/toast";
+import type { UserEmailProps } from "@/types/user";
 
 // Cooldown window (seconds) before another confirmation link can be requested.
 const RESEND_COOLDOWN_SECONDS = 30;
 
-export function ResendEmailButton({ email }: { email: string }) {
+export function ResendEmailButton({ email }: UserEmailProps) {
   const [isPending, startTransition] = useTransition();
   const [cooldown, setCooldown] = useState(0);
   const cooling = cooldown > 0;

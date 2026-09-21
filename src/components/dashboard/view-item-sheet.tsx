@@ -36,7 +36,14 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/components/ui/toast";
 
-import type { VaultItem } from "@/components/dashboard/data";
+import type {
+  ReadOnlyTextFieldProps,
+  ViewCategoryFieldProps,
+  ViewItemDetailProps,
+  ViewItemSheetProps,
+  ViewItemTagsFieldProps,
+} from "@/types/dashboard";
+import type { NoteFieldProps } from "@/types/note";
 
 // Fallback for demo items without a stored secret — keeps the password row
 // functional without inventing per-row data.
@@ -59,15 +66,7 @@ async function copyToClipboard(label: string, value: string) {
   }
 }
 
-function ReadOnlyTitleField({
-  id,
-  label,
-  value,
-}: {
-  id: string;
-  label: string;
-  value: string;
-}) {
+function ReadOnlyTitleField({ id, label, value }: ReadOnlyTextFieldProps) {
   return (
     <Field>
       <FieldLabel htmlFor={id}>{label}</FieldLabel>
@@ -78,7 +77,7 @@ function ReadOnlyTitleField({
   );
 }
 
-function CategoryField({ value }: { value: string }) {
+function CategoryField({ value }: ViewCategoryFieldProps) {
   return (
     <Field>
       <FieldLabel>Category</FieldLabel>
@@ -92,13 +91,7 @@ function CategoryField({ value }: { value: string }) {
   );
 }
 
-function TagsField({
-  item,
-  onRemoveTag,
-}: {
-  item: VaultItem;
-  onRemoveTag: (id: string, tag: string) => void;
-}) {
+function TagsField({ item, onRemoveTag }: ViewItemTagsFieldProps) {
   return (
     <Field>
       <FieldLabel>Tags</FieldLabel>
@@ -125,7 +118,7 @@ function TagsField({
   );
 }
 
-function NotesField({ id, value }: { id: string; value: string }) {
+function NotesField({ id, value }: NoteFieldProps) {
   return (
     <Field>
       <FieldLabel htmlFor={id}>Notes</FieldLabel>
@@ -144,15 +137,7 @@ function NotesField({ id, value }: { id: string; value: string }) {
 
 // Keyed per item by the parent — useState below is therefore correct lazy
 // init: tab and password visibility reset whenever a new item is viewed.
-function ViewItemDetail({
-  item,
-  onRemoveTag,
-  onEdit,
-}: {
-  item: VaultItem;
-  onRemoveTag: (id: string, tag: string) => void;
-  onEdit: (id: string) => void;
-}) {
+function ViewItemDetail({ item, onRemoveTag, onEdit }: ViewItemDetailProps) {
   const [tab, setTab] = useState(item.type === "note" ? "note" : "login");
   const [showPassword, setShowPassword] = useState(false);
 
@@ -318,13 +303,7 @@ export function ViewItemSheet({
   item,
   onRemoveTag,
   onEdit,
-}: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  item: VaultItem | null;
-  onRemoveTag: (id: string, tag: string) => void;
-  onEdit: (id: string) => void;
-}) {
+}: ViewItemSheetProps) {
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent

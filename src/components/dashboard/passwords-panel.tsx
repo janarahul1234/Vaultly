@@ -55,21 +55,20 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-import {
-  categoryStyles,
-  navHeadings,
-  type NavKey,
-  type VaultCategory,
-  type VaultItem,
-  type VaultItemType,
-} from "@/components/dashboard/data";
+import { categoryStyles, navHeadings } from "@/components/dashboard/data";
+import type {
+  FilterSelectProps,
+  PasswordsPanelProps,
+} from "@/types/dashboard";
+import type {
+  VaultCategory,
+  VaultItem,
+  VaultTypeFilter,
+} from "@/types/password";
 
 const typeOptions = ["All types", "Login", "Note", "Card"] as const;
 const sortOptions = ["Name", "Recently Updated"] as const;
-const typeFilterMap: Record<
-  (typeof typeOptions)[number],
-  VaultItemType | "all"
-> = {
+const typeFilterMap: Record<(typeof typeOptions)[number], VaultTypeFilter> = {
   "All types": "all",
   Login: "login",
   Note: "note",
@@ -82,13 +81,7 @@ function FilterSelect({
   options,
   value,
   onValueChange,
-}: {
-  label: string;
-  icon: React.ComponentType<{ className?: string }>;
-  options: readonly string[];
-  value: string;
-  onValueChange: (value: string) => void;
-}) {
+}: FilterSelectProps) {
   return (
     <Select
       value={value}
@@ -125,18 +118,7 @@ export function PasswordsPanel({
   onAddItem,
   onView,
   onEdit,
-}: {
-  items: VaultItem[];
-  trash: VaultItem[];
-  activeNav: NavKey;
-  onToggleFavorite: (id: string) => void;
-  onTrash: (id: string) => void;
-  onRestore: (id: string) => void;
-  onDeleteForever: (id: string) => void;
-  onAddItem: (type: VaultItemType) => void;
-  onView: (id: string) => void;
-  onEdit: (id: string) => void;
-}) {
+}: PasswordsPanelProps) {
   const [typeFilter, setTypeFilter] = useState<string>(typeOptions[0]);
   const [categoryFilter, setCategoryFilter] = useState("All categories");
   const [tagFilter, setTagFilter] = useState("All tags");

@@ -66,7 +66,7 @@ type ItemActionsDropdownProps = {
 
 /**
  * Row-level actions menu for the passwords table. Memoized so typing in the
- * search, toggling checkboxes, or favorite flips elsewhere do not re-render
+ * search or favorite flips elsewhere do not re-render
  * every row's menu (rerender-memo).
  */
 export const ItemActionsDropdown = memo(function ItemActionsDropdown({

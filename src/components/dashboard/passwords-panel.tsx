@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import {
   ArrowUpDownIcon,
@@ -24,7 +24,6 @@ import { ItemIcon } from "@/components/dashboard/item-icon";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ButtonGroup } from "@/components/ui/button-group";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -142,7 +141,6 @@ export function PasswordsPanel({
   const [categoryFilter, setCategoryFilter] = useState("All categories");
   const [tagFilter, setTagFilter] = useState("All tags");
   const [sortValue, setSortValue] = useState<string>(sortOptions[0]);
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   const categoryOptions = useMemo(
     () => [
@@ -201,38 +199,13 @@ export function PasswordsPanel({
     return [...groups.entries()].sort((a, b) => a[0].localeCompare(b[0]));
   }, [activeNav, visibleItems]);
 
-  // Functional setState keeps the callbacks stable (rerender-functional-setstate).
-  const toggleSelected = useCallback((id: string) => {
-    setSelectedIds((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
-    );
-  }, []);
-
-  const allSelected =
-    visibleItems.length > 0 &&
-    visibleItems.every((item) => selectedIds.includes(item.id));
-  const someSelected = visibleItems.some((item) =>
-    selectedIds.includes(item.id),
-  );
-
-  const toggleAll = (checked: boolean) => {
-    const visibleIds = visibleItems.map((item) => item.id);
-    setSelectedIds((prev) =>
-      checked
-        ? [...new Set([...prev, ...visibleIds])]
-        : prev.filter((id) => !visibleIds.includes(id)),
-    );
-  };
-
   const heading = navHeadings[activeNav];
   const isTrash = activeNav === "trash";
   const rowCount = isTrash ? trash.length : visibleItems.length;
 
-  // Shared row content for the flat and grouped tables (hoisted JSX factory,
-  // rendering-hoist-jsx) so both views stay in sync.
   const dataCells = (item: VaultItem) => (
     <>
-      <TableCell>
+      <TableCell className="pl-4">
         <Button
           variant="ghost"
           size="icon"
@@ -252,7 +225,7 @@ export function PasswordsPanel({
       </TableCell>
       <TableCell>
         <div className="flex items-center gap-3">
-          <ItemIcon iconKey={item.iconKey} />
+          <ItemIcon iconKey={item.iconKey} website={item.website} />
           <span className="font-medium">{item.name}</span>
         </div>
       </TableCell>
@@ -408,7 +381,7 @@ export function PasswordsPanel({
                     {/* Hidden but measured by the table layout, keeping column
                         widths consistent across groups. */}
                     <TableRow className="hidden">
-                      <TableHead className="w-10" />
+                      <TableHead className="w-10 pl-4" />
                       <TableHead>Name</TableHead>
                       <TableHead>Website</TableHead>
                       <TableHead>Category</TableHead>
@@ -418,12 +391,7 @@ export function PasswordsPanel({
                   </TableHeader>
                   <TableBody>
                     {groupItems.map((item) => (
-                      <TableRow
-                        key={`${groupName}-${item.id}`}
-                        data-state={
-                          selectedIds.includes(item.id) ? "selected" : undefined
-                        }
-                      >
+                      <TableRow key={`${groupName}-${item.id}`}>
                         {dataCells(item)}
                       </TableRow>
                     ))}
@@ -448,7 +416,7 @@ export function PasswordsPanel({
                 <TableRow key={item.id}>
                   <TableCell className="pl-4">
                     <div className="flex items-center gap-3">
-                      <ItemIcon iconKey={item.iconKey} />
+                      <ItemIcon iconKey={item.iconKey} website={item.website} />
                       <span className="font-medium">{item.name}</span>
                     </div>
                   </TableCell>
@@ -491,15 +459,7 @@ export function PasswordsPanel({
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/40 hover:bg-muted/40">
-                <TableHead className="w-10 pl-4">
-                  <Checkbox
-                    aria-label="Select all items"
-                    checked={allSelected}
-                    indeterminate={someSelected && !allSelected}
-                    onCheckedChange={(checked) => toggleAll(checked === true)}
-                  />
-                </TableHead>
-                <TableHead className="w-10" />
+                <TableHead className="w-10 pl-4" />
                 <TableHead>Name</TableHead>
                 <TableHead>Website</TableHead>
                 <TableHead>Category</TableHead>
@@ -508,24 +468,9 @@ export function PasswordsPanel({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {visibleItems.map((item) => {
-                const selected = selectedIds.includes(item.id);
-                return (
-                  <TableRow
-                    key={item.id}
-                    data-state={selected ? "selected" : undefined}
-                  >
-                    <TableCell className="pl-4">
-                      <Checkbox
-                        aria-label={`Select ${item.name}`}
-                        checked={selected}
-                        onCheckedChange={() => toggleSelected(item.id)}
-                      />
-                    </TableCell>
-                    {dataCells(item)}
-                  </TableRow>
-                );
-              })}
+              {visibleItems.map((item) => (
+                <TableRow key={item.id}>{dataCells(item)}</TableRow>
+              ))}
             </TableBody>
           </Table>
         )}

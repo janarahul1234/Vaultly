@@ -589,7 +589,11 @@ export function EditItemSheet({
         {item && (
           <>
             <SheetHeader className="flex-row items-center gap-3 px-6 pt-6 pb-3 text-left">
-              <ItemIcon iconKey={item.iconKey} className="size-12 rounded-xl" />
+              <ItemIcon
+                iconKey={item.iconKey}
+                website={item.website}
+                className="size-12 rounded-xl"
+              />
               <div className="flex flex-col gap-0.5">
                 <SheetTitle className="text-lg font-semibold">
                   Edit Item

@@ -89,6 +89,7 @@ export function DashboardSearch({
                 >
                   <ItemIcon
                     iconKey={item.iconKey}
+                    website={item.website}
                     className="size-6 rounded-md border-0"
                   />
                   <span className="truncate">{item.name}</span>

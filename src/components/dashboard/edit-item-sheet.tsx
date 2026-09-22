@@ -324,7 +324,7 @@ function EditItemDetail({ item, onSave, onDelete }: EditItemDetailProps) {
               <InputGroup>
                 <InputGroupInput
                   id="edit-username"
-                  placeholder="e.g., rahul@example.com"
+                  placeholder="e.g., you@example.com"
                   {...register("username")}
                 />
                 <InputGroupAddon align="inline-end">

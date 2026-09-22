@@ -10,7 +10,7 @@ import { ViewItemSheet } from "@/components/dashboard/view-item-sheet";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { useDashboard } from "@/hooks/use-dashboard";
 
-import type { VaultData } from "@/lib/supabase/vault-queries";
+import type { VaultData } from "@/types/password";
 
 export function Dashboard({ data }: { data: VaultData }) {
   // Vault state and handlers live in useDashboard — this component is purely

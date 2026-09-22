@@ -1,14 +1,19 @@
 // Supabase client for Server Components, Server Actions, and Route Handlers.
 // A fresh client is created per request because it reads the request cookies.
+// `server-only` makes an accidental import from Client Components a build
+// error instead of a silent secret leak.
+import "server-only";
 import { cookies } from "next/headers";
 import { createServerClient } from "@supabase/ssr";
+
+import { env } from "@/lib/env";
 
 export async function createClient() {
   const cookieStore = await cookies();
 
   return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
+    env.NEXT_PUBLIC_SUPABASE_URL,
+    env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
     {
       cookies: {
         getAll() {

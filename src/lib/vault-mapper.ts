@@ -13,6 +13,14 @@ import { format } from "date-fns";
 
 import type { VaultItem, VaultItemRow } from "@/types/password";
 
+/**
+ * Explicit column list for every `vault_items` read-back (rule: select only
+ * what the UI consumes). `user_id` and `deleted_at` are deliberately omitted
+ * — the client model never needs them and RLS already scopes by owner.
+ */
+export const VAULT_ITEM_SELECT =
+  "id, type, name, website, username, category, tags, favorite, password, notes, icon_key, created_at, updated_at";
+
 const MS_PER_DAY = 86_400_000;
 
 /** Absolute "Jan 10, 2024, 3:24 PM" format used in the details panel footer. */

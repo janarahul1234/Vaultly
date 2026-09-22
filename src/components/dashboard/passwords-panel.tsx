@@ -55,16 +55,15 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-import { navHeadings, sortOptions, typeFilterMap, typeOptions } from "@/data/dashboard";
+import {
+  navHeadings,
+  sortOptions,
+  typeFilterMap,
+  typeOptions,
+} from "@/data/dashboard";
 import { categoryStyles } from "@/data/password";
-import type {
-  FilterSelectProps,
-  PasswordsPanelProps,
-} from "@/types/dashboard";
-import type {
-  VaultCategory,
-  VaultItem,
-} from "@/types/password";
+import type { FilterSelectProps, PasswordsPanelProps } from "@/types/dashboard";
+import type { VaultCategory, VaultItem } from "@/types/password";
 
 function FilterSelect({
   label,
@@ -243,18 +242,18 @@ export function PasswordsPanel({
         </div>
 
         <ButtonGroup>
-          <Button size="lg" onClick={() => onAddItem("login")}>
+          <Button
+            size="lg"
+            className="font-sans w-28"
+            onClick={() => onAddItem("login")}
+          >
             <PlusIcon data-icon="inline-start" />
             Add Item
           </Button>
           <DropdownMenu>
             <DropdownMenuTrigger
               render={
-                <Button
-                  size="lg"
-                  className="px-2"
-                  aria-label="More item options"
-                >
+                <Button size="lg" aria-label="More item options">
                   <ChevronDownIcon />
                 </Button>
               }
@@ -314,12 +313,16 @@ export function PasswordsPanel({
 
       <div className="mt-4 rounded-xl border bg-card">
         {rowCount === 0 ? (
-          <Empty className="py-16">
+          <Empty className="py-10">
             <EmptyHeader>
-              <EmptyMedia variant="icon">
-                {isTrash ? <Trash2Icon /> : <KeyRoundIcon />}
+              <EmptyMedia variant="icon" className="size-12">
+                {isTrash ? (
+                  <Trash2Icon className="size-6" />
+                ) : (
+                  <KeyRoundIcon className="size-6" />
+                )}
               </EmptyMedia>
-              <EmptyTitle>
+              <EmptyTitle className="text-xl">
                 {isTrash ? "Trash is empty" : "No items match your filters"}
               </EmptyTitle>
               <EmptyDescription>

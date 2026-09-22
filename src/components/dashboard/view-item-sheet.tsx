@@ -44,7 +44,6 @@ import type {
 } from "@/types/dashboard";
 import type { NoteFieldProps } from "@/types/note";
 
-import { fallbackPassword } from "@/data/password";
 import { copyToClipboard } from "@/lib/vault-helpers";
 
 function ReadOnlyTitleField({ id, label, value }: ReadOnlyTextFieldProps) {
@@ -122,7 +121,9 @@ function ViewItemDetail({ item, onRemoveTag, onEdit }: ViewItemDetailProps) {
   const [tab, setTab] = useState(item.type === "note" ? "note" : "login");
   const [showPassword, setShowPassword] = useState(false);
 
-  const passwordValue = item.password ?? fallbackPassword;
+  // Strictly the stored secret from the database — an item without a saved
+  // password simply shows an empty field, never an invented fallback.
+  const passwordValue = item.password ?? "";
 
   const openWebsite = useCallback(() => {
     if (!item.website) return;

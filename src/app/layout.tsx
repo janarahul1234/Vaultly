@@ -36,6 +36,11 @@ try{
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" data-scroll-behavior="smooth">
+      <head>
+        {/* Blocking inline script: restores the saved theme before first
+            paint so dark-mode users never see a light flash. */}
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+      </head>
       <body
         className={cn(
           "min-h-full flex flex-col font-mono antialiased",

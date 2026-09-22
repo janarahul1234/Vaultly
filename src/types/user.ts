@@ -2,12 +2,6 @@
 
 import type { LucideIcon } from "lucide-react";
 
-/** Displayed account identity (profile menu). */
-export type UserAccount = {
-  name: string;
-  email: string;
-};
-
 /** Profile-menu link entry (MenuLink props). */
 export type ProfileMenuLink = {
   href: string;

@@ -1,6 +1,6 @@
 // Vault data model + password-specific types shared across the dashboard.
 // Extracted from @/data/password and the add/edit sheets so the
-// model lives independently of the mock data and UI code.
+// model lives independently of display metadata and UI code.
 
 export type VaultCategory =
   | "Work"
@@ -103,10 +103,11 @@ export type TagsFieldProps = {
 
 // ── Persistence contract (Supabase `public.vault_items`) ───────────────────
 
-/** Raw row shape as stored/returned by Postgres (snake_case). */
+/** Raw row shape as returned by Postgres (snake_case). Only the columns in
+ * `VAULT_ITEM_SELECT` are read back, so owner/soft-delete columns are
+ * optional. */
 export type VaultItemRow = {
   id: string;
-  user_id: string;
   type: VaultItemType;
   name: string;
   website: string | null;
@@ -120,7 +121,8 @@ export type VaultItemRow = {
   /** ISO-8601 timestamps (serialized to strings across the RSC boundary). */
   created_at: string;
   updated_at: string;
-  deleted_at: string | null;
+  user_id?: string;
+  deleted_at?: string | null;
 };
 
 /**
@@ -134,3 +136,13 @@ export type VaultItemResult =
 
 /** Result for actions that don't need to hand a row back (e.g. hard delete). */
 export type VaultResult = { ok: true } | { ok: false; message: string };
+
+/**
+ * The dashboard's initial server read (active items + trash). Lives here so
+ * client components can type the RSC prop without importing a server-only
+ * query module, even as a type-only import.
+ */
+export type VaultData = {
+  items: VaultItem[];
+  trash: VaultItem[];
+};

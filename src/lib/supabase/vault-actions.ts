@@ -1,15 +1,26 @@
 "use server";
 
-// Vault CRUD as Server Actions (the Next.js-preferred mutation path). Each
-// action authenticates, writes to Supabase under RLS, revalidates the dashboard
-// segment, and returns the authoritative row so the client hook can reconcile
-// its optimistic-free state without a follow-up read. RLS is still the real
-// security boundary; the getClaims() check is defense in depth and lets us
-// return a clean message instead of a Postgres error.
+// Vault CRUD as Server Actions (the Next.js-preferred mutation path).
+// Every action follows the same order (rule #12):
+//   validate input (Zod safeParse on untrusted args)
+//     → authenticate (getClaims)
+//     → Supabase write, scoped by RLS + explicit user_id predicates
+//     → revalidatePath("/dashboard")
+//     → return the authoritative row (or a user-safe error).
+// Postgres/Supabase error details are logged server-side only — clients get
+// generic messages so schema internals never leak (rule #55).
 
 import { revalidatePath } from "next/cache";
+import type { ZodError } from "zod";
 
-import { rowToVaultItem } from "@/lib/vault-mapper";
+import {
+  VaultItemDraftInputSchema,
+  VaultItemEditInputSchema,
+  VaultItemIdSchema,
+  VaultItemTagSchema,
+  firstIssueMessage,
+} from "@/lib/schemas/vault-item";
+import { rowToVaultItem, VAULT_ITEM_SELECT } from "@/lib/vault-mapper";
 import { createClient } from "@/lib/supabase/server";
 
 import type {
@@ -30,39 +41,65 @@ async function requireUserId(): Promise<string | null> {
   return typeof sub === "string" ? sub : null;
 }
 
-function toSingle(value: unknown): VaultItemRow | null {
-  return (value as VaultItemRow | null) ?? null;
+const UNAUTHORIZED_MESSAGE = "You must be signed in.";
+
+const UNAUTHORIZED: VaultItemResult = {
+  ok: false,
+  message: UNAUTHORIZED_MESSAGE,
+};
+
+/**
+ * Logs the real error server-side and hands back a user-safe result. An
+ * empty result set (`.maybeSingle()` → null) means the row doesn't exist or
+ * isn't ours — RLS already hides foreign rows, so both cases read as "not
+ * found" without leaking existence.
+ */
+function actionFailure(
+  action: string,
+  detail: unknown,
+  message = GENERIC_ERROR,
+): VaultItemResult {
+  console.error(`[vault-actions] ${action}`, detail);
+  return { ok: false, message };
+}
+
+function validationFailure(action: string, error: ZodError): VaultItemResult {
+  console.error(`[vault-actions] ${action} validation`, error.issues[0]?.message);
+  return { ok: false, message: firstIssueMessage(error) };
 }
 
 /** Create a new vault item for the current user. */
-export async function createVaultItem(draft: ItemDraft): Promise<VaultItemResult> {
+export async function createVaultItem(
+  draft: ItemDraft,
+): Promise<VaultItemResult> {
+  const parsed = VaultItemDraftInputSchema.safeParse(draft);
+  if (!parsed.success) return validationFailure("createVaultItem", parsed.error);
+
   const userId = await requireUserId();
-  if (!userId) return { ok: false, message: "You must be signed in." };
+  if (!userId) return UNAUTHORIZED;
 
-  const name = draft.name?.trim();
-  if (!name) return { ok: false, message: "Title is required." };
-
+  const input = parsed.data;
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("vault_items")
     .insert({
       user_id: userId,
-      type: draft.type,
-      name,
-      website: draft.website?.trim() || null,
-      username: draft.username?.trim() || null,
-      category: draft.category ?? "Personal",
-      tags: draft.tags ?? [],
+      type: input.type,
+      name: input.name,
+      website: input.website || null,
+      username: input.username || null,
+      category: input.category,
+      tags: input.tags,
       favorite: false,
-      password: draft.type === "login" ? draft.password || null : null,
-      notes: draft.notes?.trim() || null,
+      password: input.type === "login" ? input.password : null,
+      notes: input.notes || null,
       icon_key: "generic",
     })
-    .select("*")
+    .select(VAULT_ITEM_SELECT)
     .single();
 
   if (error || !data) {
-    return { ok: false, message: error?.message ?? GENERIC_ERROR };
+    return actionFailure("createVaultItem", error, "Unable to save the item.");
   }
 
   revalidatePath("/dashboard");
@@ -74,33 +111,40 @@ export async function updateVaultItem(
   id: string,
   draft: ItemEditDraft,
 ): Promise<VaultItemResult> {
+  const parsedId = VaultItemIdSchema.safeParse(id);
+  if (!parsedId.success) return validationFailure("updateVaultItem", parsedId.error);
+
+  const parsed = VaultItemEditInputSchema.safeParse(draft);
+  if (!parsed.success) return validationFailure("updateVaultItem", parsed.error);
+
   const userId = await requireUserId();
-  if (!userId) return { ok: false, message: "You must be signed in." };
+  if (!userId) return UNAUTHORIZED;
 
-  const name = draft.name?.trim();
-  if (!name) return { ok: false, message: "Title is required." };
-
+  const input = parsed.data;
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("vault_items")
     .update({
-      type: draft.type,
-      name,
-      website: draft.website?.trim() || null,
-      username: draft.username?.trim() || null,
-      category: draft.category,
-      tags: draft.tags ?? [],
-      password: draft.type === "login" ? draft.password || null : null,
-      notes: draft.notes?.trim() || null,
+      type: input.type,
+      name: input.name,
+      website: input.website || null,
+      username: input.username || null,
+      category: input.category,
+      tags: input.tags,
+      password: input.type === "login" ? input.password : null,
+      notes: input.notes || null,
     })
-    .eq("id", id)
+    .eq("id", parsedId.data)
     .eq("user_id", userId)
     .is("deleted_at", null)
-    .select("*")
-    .single();
+    .select(VAULT_ITEM_SELECT)
+    .maybeSingle();
 
-  if (error || !data) {
-    return { ok: false, message: error?.message ?? "Could not update the item." };
+  if (error) {
+    return actionFailure("updateVaultItem", error, "Unable to update the item.");
+  }
+  if (!data) {
+    return { ok: false, message: "Item not found." };
   }
 
   revalidatePath("/dashboard");
@@ -108,100 +152,148 @@ export async function updateVaultItem(
 }
 
 /** Flip the favorite flag and return the updated item. */
-export async function toggleVaultItemFavorite(id: string): Promise<VaultItemResult> {
+export async function toggleVaultItemFavorite(
+  id: string,
+): Promise<VaultItemResult> {
+  const parsedId = VaultItemIdSchema.safeParse(id);
+  if (!parsedId.success) {
+    return validationFailure("toggleVaultItemFavorite", parsedId.error);
+  }
+
   const userId = await requireUserId();
-  if (!userId) return { ok: false, message: "You must be signed in." };
+  if (!userId) return UNAUTHORIZED;
 
   const supabase = await createClient();
   const { data: current, error: readError } = await supabase
     .from("vault_items")
     .select("favorite")
-    .eq("id", id)
+    .eq("id", parsedId.data)
     .eq("user_id", userId)
     .is("deleted_at", null)
-    .single();
+    .maybeSingle();
 
-  if (readError || !current) {
+  if (readError) {
+    return actionFailure(
+      "toggleVaultItemFavorite(read)",
+      readError,
+      "Unable to update the item.",
+    );
+  }
+  if (!current) {
     return { ok: false, message: "Item not found." };
   }
 
   const { data, error } = await supabase
     .from("vault_items")
     .update({ favorite: !current.favorite })
-    .eq("id", id)
+    .eq("id", parsedId.data)
     .eq("user_id", userId)
-    .select("*")
-    .single();
+    .is("deleted_at", null)
+    .select(VAULT_ITEM_SELECT)
+    .maybeSingle();
 
-  if (error || !data) {
-    return { ok: false, message: error?.message ?? "Could not update the item." };
+  if (error) {
+    return actionFailure(
+      "toggleVaultItemFavorite",
+      error,
+      "Unable to update the item.",
+    );
+  }
+  if (!data) {
+    return { ok: false, message: "Item not found." };
   }
 
   revalidatePath("/dashboard");
-  return { ok: true, item: rowToVaultItem(toSingle(data)!) };
+  return { ok: true, item: rowToVaultItem(data as VaultItemRow) };
 }
 
 /** Soft-delete: move an active item into the trash. */
 export async function trashVaultItem(id: string): Promise<VaultItemResult> {
+  const parsedId = VaultItemIdSchema.safeParse(id);
+  if (!parsedId.success) {
+    return validationFailure("trashVaultItem", parsedId.error);
+  }
+
   const userId = await requireUserId();
-  if (!userId) return { ok: false, message: "You must be signed in." };
+  if (!userId) return UNAUTHORIZED;
 
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("vault_items")
     .update({ deleted_at: new Date().toISOString() })
-    .eq("id", id)
+    .eq("id", parsedId.data)
     .eq("user_id", userId)
     .is("deleted_at", null)
-    .select("*")
-    .single();
+    .select(VAULT_ITEM_SELECT)
+    .maybeSingle();
 
-  if (error || !data) {
-    return { ok: false, message: error?.message ?? "Could not move the item to trash." };
+  if (error) {
+    return actionFailure(
+      "trashVaultItem",
+      error,
+      "Could not move the item to trash.",
+    );
+  }
+  if (!data) {
+    return { ok: false, message: "Item not found." };
   }
 
   revalidatePath("/dashboard");
-  return { ok: true, item: rowToVaultItem(toSingle(data)!) };
+  return { ok: true, item: rowToVaultItem(data as VaultItemRow) };
 }
 
 /** Restore a trashed item back into the active vault. */
 export async function restoreVaultItem(id: string): Promise<VaultItemResult> {
+  const parsedId = VaultItemIdSchema.safeParse(id);
+  if (!parsedId.success) {
+    return validationFailure("restoreVaultItem", parsedId.error);
+  }
+
   const userId = await requireUserId();
-  if (!userId) return { ok: false, message: "You must be signed in." };
+  if (!userId) return UNAUTHORIZED;
 
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("vault_items")
     .update({ deleted_at: null })
-    .eq("id", id)
+    .eq("id", parsedId.data)
     .eq("user_id", userId)
     .not("deleted_at", "is", null)
-    .select("*")
-    .single();
+    .select(VAULT_ITEM_SELECT)
+    .maybeSingle();
 
-  if (error || !data) {
-    return { ok: false, message: error?.message ?? "Could not restore the item." };
+  if (error) {
+    return actionFailure("restoreVaultItem", error, "Could not restore the item.");
+  }
+  if (!data) {
+    return { ok: false, message: "Item not found." };
   }
 
   revalidatePath("/dashboard");
-  return { ok: true, item: rowToVaultItem(toSingle(data)!) };
+  return { ok: true, item: rowToVaultItem(data as VaultItemRow) };
 }
 
 /** Permanently delete a trashed item. */
 export async function deleteVaultItemForever(id: string): Promise<VaultResult> {
+  const parsedId = VaultItemIdSchema.safeParse(id);
+  if (!parsedId.success) {
+    return validationFailure("deleteVaultItemForever", parsedId.error);
+  }
+
   const userId = await requireUserId();
-  if (!userId) return { ok: false, message: "You must be signed in." };
+  if (!userId) return { ok: false, message: UNAUTHORIZED_MESSAGE };
 
   const supabase = await createClient();
   const { error } = await supabase
     .from("vault_items")
     .delete()
-    .eq("id", id)
+    .eq("id", parsedId.data)
     .eq("user_id", userId)
     .not("deleted_at", "is", null);
 
   if (error) {
-    return { ok: false, message: error.message };
+    console.error("[vault-actions] deleteVaultItemForever", error);
+    return { ok: false, message: "Unable to delete the item." };
   }
 
   revalidatePath("/dashboard");
@@ -213,36 +305,62 @@ export async function removeVaultItemTag(
   id: string,
   tag: string,
 ): Promise<VaultItemResult> {
+  const parsedId = VaultItemIdSchema.safeParse(id);
+  if (!parsedId.success) {
+    return validationFailure("removeVaultItemTag", parsedId.error);
+  }
+  const parsedTag = VaultItemTagSchema.safeParse(tag);
+  if (!parsedTag.success) {
+    return validationFailure("removeVaultItemTag", parsedTag.error);
+  }
+
   const userId = await requireUserId();
-  if (!userId) return { ok: false, message: "You must be signed in." };
+  if (!userId) return UNAUTHORIZED;
 
   const supabase = await createClient();
   const { data: current, error: readError } = await supabase
     .from("vault_items")
     .select("tags")
-    .eq("id", id)
+    .eq("id", parsedId.data)
     .eq("user_id", userId)
     .is("deleted_at", null)
-    .single();
+    .maybeSingle();
 
-  if (readError || !current) {
+  if (readError) {
+    return actionFailure(
+      "removeVaultItemTag(read)",
+      readError,
+      "Unable to update the item.",
+    );
+  }
+  if (!current) {
     return { ok: false, message: "Item not found." };
   }
 
-  const nextTags = ((current.tags ?? []) as string[]).filter((t) => t !== tag);
+  const nextTags = ((current.tags ?? []) as string[]).filter(
+    (t) => t !== parsedTag.data,
+  );
 
   const { data, error } = await supabase
     .from("vault_items")
     .update({ tags: nextTags })
-    .eq("id", id)
+    .eq("id", parsedId.data)
     .eq("user_id", userId)
-    .select("*")
-    .single();
+    .is("deleted_at", null)
+    .select(VAULT_ITEM_SELECT)
+    .maybeSingle();
 
-  if (error || !data) {
-    return { ok: false, message: error?.message ?? "Could not update the item." };
+  if (error) {
+    return actionFailure(
+      "removeVaultItemTag",
+      error,
+      "Unable to update the item.",
+    );
+  }
+  if (!data) {
+    return { ok: false, message: "Item not found." };
   }
 
   revalidatePath("/dashboard");
-  return { ok: true, item: rowToVaultItem(toSingle(data)!) };
+  return { ok: true, item: rowToVaultItem(data as VaultItemRow) };
 }

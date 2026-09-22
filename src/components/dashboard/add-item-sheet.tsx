@@ -349,7 +349,7 @@ export function AddItemSheet({
                   </FieldLabel>
                   <Input
                     id="item-username"
-                    placeholder="e.g., rahul@example.com"
+                    placeholder="e.g., you@example.com"
                     {...register("username")}
                   />
                 </Field>

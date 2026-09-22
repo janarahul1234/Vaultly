@@ -12,7 +12,6 @@ import {
   trashVaultItem,
   updateVaultItem,
 } from "@/lib/supabase/vault-actions";
-import type { VaultData } from "@/lib/supabase/vault-queries";
 import type {
   AddItemState,
   DeleteMode,
@@ -22,6 +21,7 @@ import type {
 import type {
   ItemDraft,
   ItemEditDraft,
+  VaultData,
   VaultFormType,
   VaultItem,
   VaultItemType,

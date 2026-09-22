@@ -5,7 +5,7 @@ import { ChevronDownIcon, LogOutIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 
-import { accountDetails, profileLinks, supportLinks } from "@/data/user";
+import { profileLinks, supportLinks } from "@/data/user";
 import { useSignOut } from "@/hooks/use-sign-out";
 import { createClient } from "@/lib/supabase/client";
 
@@ -52,10 +52,11 @@ export function ProfileMenu() {
     };
   }, []);
 
-  const email = user?.email ?? accountDetails.email;
+  // Identity comes strictly from the live Supabase session — until the user
+  // resolves, the menu renders empty rather than a placeholder account.
+  const email = user?.email ?? "";
   const fullName =
-    (user?.user_metadata?.full_name as string | undefined) ??
-    email.split("@")[0];
+    (user?.user_metadata?.full_name as string | undefined) ?? email.split("@")[0];
   const initial = (fullName || email).charAt(0).toUpperCase();
 
   return (
